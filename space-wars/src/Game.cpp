@@ -26,10 +26,8 @@ Game::Game()
     // Initialize random seed for respawn
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
     
-    // Initialize network (for now, network setup will be manual)
-    // TODO: Add UI for network connection setup
-    std::cout << "Space Wars Game Started" << std::endl;
-    std::cout << "Note: Network connection setup not yet implemented in UI" << std::endl;
+    // Initialize network connection
+    initializeNetwork();
 }
 
 Game::~Game() {
@@ -269,7 +267,66 @@ void Game::syncNetworkState() {
 }
 
 void Game::initializeNetwork() {
-    // Network initialization would be done here
-    // For now, this is a placeholder
-    // In a full implementation, you'd prompt for IP/port or have a menu
+    std::cout << "\n=== Space Wars Network Setup ===" << std::endl;
+    std::cout << "Enter connection type:" << std::endl;
+    std::cout << "1. Host (wait for other player to connect)" << std::endl;
+    std::cout << "2. Connect to other player" << std::endl;
+    std::cout << "3. Skip network (single-player testing)" << std::endl;
+    std::cout << "Choice (1/2/3): ";
+    
+    int choice;
+    std::cin >> choice;
+    
+    if (choice == 1) {
+        // Host mode - bind and wait for connection
+        int localPort;
+        std::cout << "Enter port to listen on (e.g., 5555): ";
+        std::cin >> localPort;
+        
+        // For hosting, we need to set up the receive socket
+        // The send socket will be created when we know the client's address
+        // For now, we'll use a simplified approach where host binds on localPort
+        // and expects client to connect to localPort+1 for sending
+        std::cout << "Waiting for connection on port " << localPort << "..." << std::endl;
+        std::cout << "Tell the other player to connect to your IP address and port " << (localPort + 1) << std::endl;
+        
+        // Bind for receiving (host receives on localPort)
+        // Host sends to client on client's port (we'll need client's IP and port)
+        // For simplicity, let's use: host receives on localPort, sends to peerPort
+        int peerPort;
+        std::string peerIp;
+        std::cout << "Enter peer's IP address (for sending): ";
+        std::cin >> peerIp;
+        std::cout << "Enter peer's port (for sending, e.g., " << (localPort + 1) << "): ";
+        std::cin >> peerPort;
+        
+        if (m_networkManager.connect(peerIp, peerPort, localPort)) {
+            std::cout << "Connected! Game starting..." << std::endl;
+        } else {
+            std::cout << "Failed to connect. Continuing in single-player mode." << std::endl;
+        }
+    } else if (choice == 2) {
+        // Client mode - connect to host
+        std::string peerIp;
+        int peerPort, localPort;
+        
+        std::cout << "Enter host's IP address: ";
+        std::cin >> peerIp;
+        std::cout << "Enter host's port (for sending to host): ";
+        std::cin >> peerPort;
+        std::cout << "Enter your local port (for receiving, e.g., " << (peerPort + 1) << "): ";
+        std::cin >> localPort;
+        
+        if (m_networkManager.connect(peerIp, peerPort, localPort)) {
+            std::cout << "Connected! Game starting..." << std::endl;
+        } else {
+            std::cout << "Failed to connect. Continuing in single-player mode." << std::endl;
+        }
+    } else {
+        // Skip network
+        std::cout << "Skipping network connection. Single-player mode." << std::endl;
+        std::cout << "Note: You can test the game locally, but network features won't work." << std::endl;
+    }
+    
+    std::cout << std::endl;
 }
