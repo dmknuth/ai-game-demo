@@ -50,21 +50,34 @@ pkg_check_modules(ZMQ REQUIRED libzmq)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Link SFML libraries (handle both 2.5 and 3.0)
+set(_sfml_targets)
 if(SFML_3_FOUND)
     # SFML 3.0 - Graphics component includes Window and System dependencies
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        SFML::Graphics
-    )
+    if(TARGET SFML::Graphics)
+        list(APPEND _sfml_targets SFML::Graphics)
+    elseif(TARGET sfml-graphics)
+        list(APPEND _sfml_targets sfml-graphics)
+    else()
+        message(FATAL_ERROR "SFML graphics target not found for SFML 3.x")
+    endif()
 else()
-    # SFML 2.5
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        SFML::System
-        SFML::Window
-        SFML::Graphics
-    )
+    # SFML 2.5/2.6
+    foreach(_component Graphics Window System)
+        string(TOLOWER "${_component}" _component_lower)
+        if(TARGET "SFML::${_component}")
+            list(APPEND _sfml_targets "SFML::${_component}")
+        elseif(TARGET "sfml-${_component_lower}")
+            list(APPEND _sfml_targets "sfml-${_component_lower}")
+        else()
+            message(FATAL_ERROR "SFML target for component ${_component} not found")
+        endif()
+    endforeach()
 endif()
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+    ${_sfml_targets}
+)
 
 # Link ZeroMQ libraries
 target_include_directories(${PROJECT_NAME} PRIVATE ${ZMQ_INCLUDE_DIRS})
