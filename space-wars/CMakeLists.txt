@@ -33,8 +33,8 @@ set(SOURCES
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Find SFML (try 3.0 first, then fall back to 2.5)
-# SFML 3.0 uses Graphics component which includes Window
-find_package(SFML 3.0 COMPONENTS Graphics QUIET)
+set(_sfml_components Graphics Window System)
+find_package(SFML 3.0 COMPONENTS ${_sfml_components} QUIET)
 if(SFML_FOUND AND SFML_VERSION_MAJOR VERSION_GREATER_EQUAL 3)
     set(SFML_3_FOUND TRUE)
 else()
@@ -51,28 +51,27 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Link SFML libraries (handle both 2.5 and 3.0)
 set(_sfml_targets)
-if(SFML_3_FOUND)
-    # SFML 3.0 - Graphics component includes Window and System dependencies
-    if(TARGET SFML::Graphics)
-        list(APPEND _sfml_targets SFML::Graphics)
-    elseif(TARGET sfml-graphics)
-        list(APPEND _sfml_targets sfml-graphics)
-    else()
-        message(FATAL_ERROR "SFML graphics target not found for SFML 3.x")
-    endif()
-else()
-    # SFML 2.5/2.6
-    foreach(_component Graphics Window System)
-        string(TOLOWER "${_component}" _component_lower)
-        if(TARGET "SFML::${_component}")
-            list(APPEND _sfml_targets "SFML::${_component}")
-        elseif(TARGET "sfml-${_component_lower}")
-            list(APPEND _sfml_targets "sfml-${_component_lower}")
-        else()
-            message(FATAL_ERROR "SFML target for component ${_component} not found")
+foreach(_component IN LISTS _sfml_components)
+    string(TOLOWER "${_component}" _component_lower)
+    set(_candidate_targets
+        "SFML::${_component}"
+        "sfml-${_component_lower}"
+    )
+    set(_component_target "")
+    foreach(_candidate IN LISTS _candidate_targets)
+        if(TARGET "${_candidate}" OR NOT "${_candidate}" MATCHES "^SFML::")
+            set(_component_target "${_candidate}")
+            break()
         endif()
     endforeach()
-endif()
+    if(_component_target MATCHES "^SFML::" AND NOT TARGET "${_component_target}")
+        set(_component_target "")
+    endif()
+    if(_component_target STREQUAL "")
+        message(FATAL_ERROR "SFML target for component ${_component} not found")
+    endif()
+    list(APPEND _sfml_targets "${_component_target}")
+endforeach()
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
