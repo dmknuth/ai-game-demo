@@ -262,37 +262,35 @@ void Game::handleHit(const Projectile& projectile, int hitSpacecraftId) {
 void Game::respawnSpacecraft(int playerId) {
     Spacecraft& spacecraft = m_gameState.getSpacecraft(playerId);
     
-    // Generate random position (avoid center where both start)
-    float x = static_cast<float>(std::rand() % Constants::WINDOW_WIDTH);
-    float y = static_cast<float>(std::rand() % Constants::WINDOW_HEIGHT);
+    // Respawn near the appropriate edge (100 pixels from edge)
+    float x, y;
+    float orientation;
     
-    // Ensure not too close to center
-    sf::Vector2f center(Constants::WINDOW_WIDTH / 2.0f, Constants::WINDOW_HEIGHT / 2.0f);
-    sf::Vector2f pos(x, y);
-    float distToCenter = std::sqrt(
-        (pos.x - center.x) * (pos.x - center.x) +
-        (pos.y - center.y) * (pos.y - center.y)
-    );
-    
-    // If too close to center, move to edge
-    if (distToCenter < 100.0f) {
-        if (std::rand() % 2 == 0) {
-            x = (std::rand() % 2 == 0) ? 50.0f : Constants::WINDOW_WIDTH - 50.0f;
-        } else {
-            y = (std::rand() % 2 == 0) ? 50.0f : Constants::WINDOW_HEIGHT - 50.0f;
-        }
+    if (playerId == 1) {
+        // Player 1 spawns near left edge
+        x = 100.0f;
+        y = Constants::WINDOW_HEIGHT / 2.0f;
+        orientation = 0.0f;  // Facing right
+    } else {
+        // Player 2 spawns near right edge
+        x = Constants::WINDOW_WIDTH - 100.0f;
+        y = Constants::WINDOW_HEIGHT / 2.0f;
+        orientation = 180.0f;  // Facing left
     }
     
-    // Reset spacecraft at new position with neutral orientation
-    float orientation = static_cast<float>(std::rand() % 360);
+    // Reset spacecraft at edge position
     spacecraft.reset(sf::Vector2f(x, y), orientation);
 }
 
 //----------------------------------------------------------------------------------------
 void Game::checkWinCondition() {
+    static bool once = true;
     if (m_gameState.hasWinner()) {
         int winner = m_gameState.getWinner();
-//        std::cout << "Player " << winner << " wins!" << std::endl;
+        if(once){
+            std::cout << "Player " << winner << " wins!" << std::endl;
+            once = false;
+        }
         // Game over state is already set in GameState
     }
 }

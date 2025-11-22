@@ -28,6 +28,9 @@ Spacecraft::Spacecraft(sf::Vector2f position, float orientation, int playerId)
 //----------------------------------------------------------------------------------------
 void Spacecraft::update(float deltaTime)
 {
+    // Apply gravitational force toward center
+    applyGravitationalForce(deltaTime);
+    
     // Apply friction
     applyFriction(deltaTime);
     
@@ -82,6 +85,37 @@ void Spacecraft::applyThrust(float deltaTime)
     if (speed > Constants::SPACECRAFT_MAX_VELOCITY) {
         m_velocity = (m_velocity / speed) * Constants::SPACECRAFT_MAX_VELOCITY;
     }
+}
+
+//----------------------------------------------------------------------------------------
+void Spacecraft::applyGravitationalForce(float deltaTime)
+{
+    // Calculate center of screen
+    sf::Vector2f center(
+        Constants::WINDOW_WIDTH / 2.0f,
+        Constants::WINDOW_HEIGHT / 2.0f
+    );
+    
+    // Calculate vector from spacecraft to center
+    sf::Vector2f toCenter = center - m_position;
+    
+    // Calculate distance to center
+    float distance = std::sqrt(toCenter.x * toCenter.x + toCenter.y * toCenter.y);
+    
+    // Avoid division by zero and apply minimum distance
+    if (distance < Constants::MIN_GRAVITY_DISTANCE) {
+        return;  // Too close to center, no gravitational effect
+    }
+    
+    // Normalize direction vector
+    sf::Vector2f direction = toCenter / distance;
+    
+    // Calculate gravitational acceleration (inverse square law: F = G / r^2)
+    // The further from center, the weaker the pull
+    float acceleration = Constants::GRAVITATIONAL_STRENGTH / (distance * distance);
+    
+    // Apply gravitational acceleration to velocity
+    m_velocity += direction * acceleration * deltaTime;
 }
 
 //----------------------------------------------------------------------------------------

@@ -12,6 +12,10 @@ namespace Constants {
     constexpr float SPACECRAFT_MAX_VELOCITY = 300.0f;  // pixels per second
     constexpr float SPACECRAFT_FRICTION = 0.98f;  // velocity multiplier per frame (simulates friction)
     
+    // Gravitational force
+    constexpr float GRAVITATIONAL_STRENGTH = 50000.0f;  // gravitational constant (pixels^3 per second^2)
+    constexpr float MIN_GRAVITY_DISTANCE = 10.0f;  // minimum distance to prevent division by zero
+    
     // Projectile physics
     constexpr float PROJECTILE_SPEED = 400.0f;  // pixels per second
     

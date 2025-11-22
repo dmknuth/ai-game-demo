@@ -13,6 +13,7 @@ public:
     void rotateLeft(float deltaTime);
     void rotateRight(float deltaTime);
     void applyThrust(float deltaTime);
+    void applyGravitationalForce(float deltaTime);
     void wrapAroundScreen();
     
     // Getters
