@@ -121,14 +121,16 @@ std::string NetworkManager::serializeGameState(const GameState& gameState)
     sf::Vector2f pos1 = sc1.getPosition();
     oss << "SC1:" << pos1.x << "," << pos1.y << "," 
         << sc1.getOrientation() << "," 
-        << sc1.getVelocity().x << "," << sc1.getVelocity().y << ";";
+        << sc1.getVelocity().x << "," << sc1.getVelocity().y << ","
+        << (sc1.isThrusting() ? "1" : "0") << ";";
     
     // Serialize spacecraft 2
     const Spacecraft& sc2 = gameState.getSpacecraft(2);
     sf::Vector2f pos2 = sc2.getPosition();
     oss << "SC2:" << pos2.x << "," << pos2.y << "," 
         << sc2.getOrientation() << "," 
-        << sc2.getVelocity().x << "," << sc2.getVelocity().y << ";";
+        << sc2.getVelocity().x << "," << sc2.getVelocity().y << ","
+        << (sc2.isThrusting() ? "1" : "0") << ";";
     
     // Serialize projectiles
     oss << "PROJ:";
@@ -163,36 +165,54 @@ bool NetworkManager::deserializeGameState(const std::string& data, GameState& ga
         // Parse spacecraft 1
         if (std::getline(iss, token, ';') && token.substr(0, 4) == "SC1:") {
             std::string scData = token.substr(4);
+            std::vector<std::string> parts;
             std::istringstream scStream(scData);
-            std::string val;
-            float values[5];
-            int i = 0;
-            while (std::getline(scStream, val, ',') && i < 5) {
-                values[i++] = std::stof(val);
+            std::string part;
+            // Split by comma
+            while (std::getline(scStream, part, ',')) {
+                parts.push_back(part);
             }
-            if (i == 5) {
+            // Should have 6 parts: x, y, orientation, vx, vy, thrust
+            if (parts.size() >= 6) {
                 Spacecraft& sc1 = gameState.getSpacecraft(1);
-                sc1.setPosition(sf::Vector2f(values[0], values[1]));
-                sc1.setOrientation(values[2]);
-                sc1.setVelocity(sf::Vector2f(values[3], values[4]));
+                sc1.setPosition(sf::Vector2f(std::stof(parts[0]), std::stof(parts[1])));
+                sc1.setOrientation(std::stof(parts[2]));
+                sc1.setVelocity(sf::Vector2f(std::stof(parts[3]), std::stof(parts[4])));
+                sc1.setThrusting(std::stoi(parts[5]) == 1);
+            } else if (parts.size() == 5) {
+                // Backward compatibility: old format without thrust
+                Spacecraft& sc1 = gameState.getSpacecraft(1);
+                sc1.setPosition(sf::Vector2f(std::stof(parts[0]), std::stof(parts[1])));
+                sc1.setOrientation(std::stof(parts[2]));
+                sc1.setVelocity(sf::Vector2f(std::stof(parts[3]), std::stof(parts[4])));
+                sc1.setThrusting(false);  // Default to false for old format
             }
         }
         
         // Parse spacecraft 2
         if (std::getline(iss, token, ';') && token.substr(0, 4) == "SC2:") {
             std::string scData = token.substr(4);
+            std::vector<std::string> parts;
             std::istringstream scStream(scData);
-            std::string val;
-            float values[5];
-            int i = 0;
-            while (std::getline(scStream, val, ',') && i < 5) {
-                values[i++] = std::stof(val);
+            std::string part;
+            // Split by comma
+            while (std::getline(scStream, part, ',')) {
+                parts.push_back(part);
             }
-            if (i == 5) {
+            // Should have 6 parts: x, y, orientation, vx, vy, thrust
+            if (parts.size() >= 6) {
                 Spacecraft& sc2 = gameState.getSpacecraft(2);
-                sc2.setPosition(sf::Vector2f(values[0], values[1]));
-                sc2.setOrientation(values[2]);
-                sc2.setVelocity(sf::Vector2f(values[3], values[4]));
+                sc2.setPosition(sf::Vector2f(std::stof(parts[0]), std::stof(parts[1])));
+                sc2.setOrientation(std::stof(parts[2]));
+                sc2.setVelocity(sf::Vector2f(std::stof(parts[3]), std::stof(parts[4])));
+                sc2.setThrusting(std::stoi(parts[5]) == 1);
+            } else if (parts.size() == 5) {
+                // Backward compatibility: old format without thrust
+                Spacecraft& sc2 = gameState.getSpacecraft(2);
+                sc2.setPosition(sf::Vector2f(std::stof(parts[0]), std::stof(parts[1])));
+                sc2.setOrientation(std::stof(parts[2]));
+                sc2.setVelocity(sf::Vector2f(std::stof(parts[3]), std::stof(parts[4])));
+                sc2.setThrusting(false);  // Default to false for old format
             }
         }
         

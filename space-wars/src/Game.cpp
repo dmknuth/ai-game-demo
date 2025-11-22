@@ -277,7 +277,7 @@ void Game::respawnSpacecraft(int playerId) {
 void Game::checkWinCondition() {
     if (m_gameState.hasWinner()) {
         int winner = m_gameState.getWinner();
-        std::cout << "Player " << winner << " wins!" << std::endl;
+//        std::cout << "Player " << winner << " wins!" << std::endl;
         // Game over state is already set in GameState
     }
 }
