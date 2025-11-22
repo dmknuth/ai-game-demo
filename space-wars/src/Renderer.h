@@ -13,7 +13,8 @@ public:
     
     // Main rendering function
     void render(sf::RenderWindow& window, const GameState& gameState, 
-                bool connectionLost, int localPlayerId);
+                bool connectionLost, int localPlayerId, 
+                bool connected, bool bothPlayersConnected);
     
     // Explosion management
     void triggerExplosion(sf::Vector2f position);
@@ -34,7 +35,8 @@ private:
     
     // UI rendering
     void drawScore(sf::RenderWindow& window, int score1, int score2);
-    void drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost);
+    void drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost, 
+                               bool bothPlayersConnected, int localPlayerId);
     void drawGameOver(sf::RenderWindow& window, int winner);
     
     // Helper functions

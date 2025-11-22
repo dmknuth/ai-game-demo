@@ -20,6 +20,7 @@ Game::Game()
     , m_localPlayerId(1)  // Will be set from config file
     , m_networkUpdateTimer(0.0f)
     , m_reconnectTimer(0.0f)
+    , m_bothPlayersConnected(false)
 {
     // Initialize SFML window (1024x768, windowed mode)
     m_window.create(sf::VideoMode(sf::Vector2u(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT)), "Space Wars");
@@ -65,17 +66,20 @@ void Game::processInput()
     // Handle window events and pass keyboard events to InputHandler
     while (std::optional<sf::Event> event = m_window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
+            // Disconnect network before closing to prevent hanging
+            m_networkManager.disconnect();
             m_window.close();
             m_isRunning = false;
+            return;  // Exit immediately to avoid further processing
         } else {
             // Pass all events to InputHandler for keyboard event processing
             m_inputHandler.handleEvent(*event);
         }
     }
     
-    // Process game input (only if not paused and game not over and window has focus)
+    // Process game input (only if not paused, both players connected, game not over, and window has focus)
     // Note: Input processing uses fixed timestep for consistency
-    if (!m_isPaused && !m_gameState.isGameOver() && m_window.hasFocus()) {
+    if (!m_isPaused && m_bothPlayersConnected && !m_gameState.isGameOver() && m_window.hasFocus()) {
         float fixedDeltaTime = 1.0f / TARGET_FPS;
         m_inputHandler.processInput(m_gameState, m_localPlayerId, fixedDeltaTime);
     }
@@ -114,6 +118,7 @@ void Game::update(float deltaTime)
             // Connection was lost - pause the game
             if (!m_isPaused) {
                 m_isPaused = true;
+                m_bothPlayersConnected = false;  // Reset - need to receive message again
                 std::cout << "Connection lost - Game paused. Attempting to reconnect..." << std::endl;
             }
             // Disconnect to allow reconnection attempt
@@ -135,7 +140,8 @@ void Game::update(float deltaTime)
                     // Reconnection successful!
                     m_isPaused = false;
                     m_networkManager.resetConnectionStatus();
-                    std::cout << "Reconnected! Game resuming..." << std::endl;
+                    m_bothPlayersConnected = false;  // Reset - need to receive message again to confirm both players
+                    std::cout << "Reconnected! Waiting for other player..." << std::endl;
                 } else {
                     // Reconnection failed - will try again in RECONNECT_INTERVAL seconds
                     std::cout << "Reconnection failed. Will retry in " << RECONNECT_INTERVAL << " seconds..." << std::endl;
@@ -152,7 +158,8 @@ void Game::render()
     
     // Render game state
     bool connectionLost = m_networkManager.isConnectionLost();
-    m_renderer.render(m_window, m_gameState, connectionLost, m_localPlayerId);
+    bool connected = m_networkManager.isConnected();
+    m_renderer.render(m_window, m_gameState, connectionLost, m_localPlayerId, connected, m_bothPlayersConnected);
     
     m_window.display();
 }
@@ -279,6 +286,12 @@ void Game::syncNetworkState() {
     // Receive remote game state (non-blocking)
     GameState remoteState;
     if (m_networkManager.receiveGameState(remoteState)) {
+        // Mark that both players are now connected (we've received a message from the other player)
+        if (!m_bothPlayersConnected) {
+            m_bothPlayersConnected = true;
+            std::cout << "Player " << ((m_localPlayerId == 1) ? 2 : 1) << " has joined! Game starting..." << std::endl;
+        }
+        
         // Merge remote state (for now, just sync the other player's spacecraft)
         // In a full implementation, you'd merge more carefully
         

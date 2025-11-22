@@ -20,6 +20,8 @@ NetworkManager::NetworkManager()
 NetworkManager::~NetworkManager() 
 {
     disconnect();
+    // Context will be automatically destroyed by unique_ptr
+    // ZeroMQ contexts should be destroyed after all sockets are closed
 }
 
 //----------------------------------------------------------------------------------------
@@ -54,6 +56,11 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
         int timeout = 100;  // 100ms timeout
         m_receiveSocket->set(zmq::sockopt::rcvtimeo, timeout);
         
+        // Set linger to 0 so sockets close immediately (prevents hanging on shutdown)
+        int linger = 0;
+        m_receiveSocket->set(zmq::sockopt::linger, linger);
+        m_sendSocket->set(zmq::sockopt::linger, linger);
+        
         m_connected = true;
         m_connectionLost = false;
         m_localPort = localPort;
@@ -70,6 +77,24 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
 //----------------------------------------------------------------------------------------
 void NetworkManager::disconnect() 
 {
+    // Set linger to 0 on sockets before destroying them to prevent hanging on shutdown
+    // This ensures sockets close immediately rather than waiting for pending messages
+    try {
+        if (m_receiveSocket) {
+            // Set linger to 0 to close immediately (no waiting for pending messages)
+            m_receiveSocket->set(zmq::sockopt::linger, 0);
+        }
+        if (m_sendSocket) {
+            // Set linger to 0 to close immediately (no waiting for pending messages)
+            m_sendSocket->set(zmq::sockopt::linger, 0);
+        }
+    } catch (const std::exception& e) {
+        // Ignore errors during cleanup - we're shutting down anyway
+        // Socket might already be closed or in an invalid state
+    }
+    
+    // Reset the unique pointers - sockets will be automatically closed/destroyed
+    // Setting linger=0 ensures they close immediately without blocking
     m_sendSocket.reset();
     m_receiveSocket.reset();
     m_connected = false;
@@ -224,6 +249,7 @@ bool NetworkManager::deserializeGameState(const std::string& data, GameState& ga
 bool NetworkManager::sendGameState(const GameState& gameState) 
 {
     if (!m_connected || !m_sendSocket) {
+        std::cout << "No game state sent" << std::endl;
         return false;
     }
     
@@ -249,6 +275,7 @@ bool NetworkManager::sendGameState(const GameState& gameState)
 bool NetworkManager::receiveGameState(GameState& gameState) 
 {
     if (!m_connected || !m_receiveSocket) {
+        std::cout << "No game state received" << std::endl;
         return false;
     }
     

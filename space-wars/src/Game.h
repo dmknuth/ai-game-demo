@@ -51,6 +51,9 @@ private:
     float m_reconnectTimer;  // Timer for periodic reconnection attempts
     static constexpr float RECONNECT_INTERVAL = 2.0f;  // Try to reconnect every 2 seconds
     
+    // Player connection state
+    bool m_bothPlayersConnected;  // True when we've received at least one message from the other player
+    
     // Frame rate limiting
     static constexpr float TARGET_FPS = 60.0f;
     static constexpr float FRAME_TIME = 1.0f / TARGET_FPS;

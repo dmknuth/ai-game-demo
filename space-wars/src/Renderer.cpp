@@ -57,8 +57,9 @@ Renderer::Renderer()
 }
 
 //----------------------------------------------------------------------------------------
-void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
-                      bool connectionLost, int /*localPlayerId*/) 
+void Renderer::render(sf::RenderWindow& window, const GameState& gameState, 
+                      bool connectionLost, int localPlayerId,
+                      bool connected, bool bothPlayersConnected) 
 {
     // Update explosion animation (will be called with deltaTime from Game class)
     // Note: deltaTime should be passed, but for now we'll update in render
@@ -82,7 +83,7 @@ void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
     
     // Draw UI
     drawScore(window, gameState.getScore(1), gameState.getScore(2));
-    drawConnectionStatus(window, true, connectionLost);  // TODO: pass actual connection status
+    drawConnectionStatus(window, connected, connectionLost, bothPlayersConnected, localPlayerId);
     
     // Draw game over message if game is over
     if (gameState.isGameOver()) {
@@ -258,7 +259,8 @@ void Renderer::drawScore(sf::RenderWindow& window, int score1, int score2)
 }
 
 //----------------------------------------------------------------------------------------
-void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost) 
+void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost, 
+                                     bool bothPlayersConnected, int localPlayerId) 
 {
     if (!m_fontLoaded) {
         // Skip if no font loaded
@@ -271,7 +273,12 @@ void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bo
     if (connectionLost) {
         statusText = "Connection Lost - Waiting for reconnection...";
         statusColor = sf::Color::Red;
-    } else if (connected) {
+    } else if (connected && !bothPlayersConnected) {
+        // Connected but waiting for the other player to join
+        int otherPlayerId = (localPlayerId == 1) ? 2 : 1;
+        statusText = "Waiting for Player " + std::to_string(otherPlayerId) + " to join...";
+        statusColor = sf::Color::Yellow;
+    } else if (connected && bothPlayersConnected) {
         statusText = "Connected";
         statusColor = sf::Color::Green;
     } else {
