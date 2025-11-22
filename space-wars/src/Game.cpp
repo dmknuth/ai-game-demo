@@ -330,10 +330,26 @@ void Game::syncNetworkState() {
         otherSc.setVelocity(remoteOtherSc.getVelocity());
         otherSc.setThrusting(remoteOtherSc.isThrusting());
         
-        // Sync projectiles (clear and add remote projectiles)
-        m_gameState.getProjectiles().clear();
+        // Merge projectiles intelligently:
+        // - Keep local player's projectiles (they're authoritative on this side)
+        // - Replace remote player's projectiles with the latest from network
+        auto& localProjectiles = m_gameState.getProjectiles();
+        
+        // Remove projectiles owned by the remote player (we'll replace them with network data)
+        localProjectiles.erase(
+            std::remove_if(
+                localProjectiles.begin(),
+                localProjectiles.end(),
+                [otherPlayerId](const Projectile& p) {
+                    return p.getOwnerPlayerId() == otherPlayerId;
+                }
+            ),
+            localProjectiles.end()
+        );
+        
+        // Add remote player's projectiles from network state
         for (const auto& proj : latestRemoteState.getProjectiles()) {
-            if (proj.isActive()) {
+            if (proj.isActive() && proj.getOwnerPlayerId() == otherPlayerId) {
                 m_gameState.addProjectile(proj);
             }
         }
