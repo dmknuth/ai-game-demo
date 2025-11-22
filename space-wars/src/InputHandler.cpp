@@ -96,19 +96,7 @@ void InputHandler::handleFiring(GameState& gameState, int localPlayerId)
 {
     const Spacecraft& spacecraft = gameState.getSpacecraft(localPlayerId);
     
-    // Remove existing projectile for this player (only one projectile per player)
-    auto& projectiles = gameState.getProjectiles();
-    projectiles.erase(
-        std::remove_if(
-            projectiles.begin(),
-            projectiles.end(),
-            [localPlayerId](const Projectile& p) {
-                return p.getOwnerPlayerId() == localPlayerId;
-            }
-        ),
-        projectiles.end()
-    );
-    
+    // Allow multiple projectiles - just add a new one without removing existing ones
     // Calculate projectile direction from spacecraft orientation
     float angleRad = spacecraft.getOrientation() * M_PI / 180.0f;
     sf::Vector2f direction(

@@ -192,7 +192,7 @@ void Game::checkCollisions() {
             );
             
             if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
-                handleHit(projOwnerId, 1);
+                handleHit(projectile, 1);
                 return;  // Only one hit per frame
             }
         }
@@ -207,7 +207,7 @@ void Game::checkCollisions() {
             );
             
             if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
-                handleHit(projOwnerId, 2);
+                handleHit(projectile, 2);
                 return;  // Only one hit per frame
             }
         }
@@ -215,15 +215,30 @@ void Game::checkCollisions() {
 }
 
 //----------------------------------------------------------------------------------------
-void Game::handleHit(int projectileOwnerId, int hitSpacecraftId) {
-    // Remove the projectile
+void Game::handleHit(const Projectile& projectile, int hitSpacecraftId) {
+    int projectileOwnerId = projectile.getOwnerPlayerId();
+    
+    // Remove only the specific projectile that hit (not all projectiles from that player)
+    // Find and remove the projectile that matches position and owner
     auto& projectiles = m_gameState.getProjectiles();
+    sf::Vector2f hitPos = projectile.getPosition();
+    
     projectiles.erase(
         std::remove_if(
             projectiles.begin(),
             projectiles.end(),
-            [projectileOwnerId](const Projectile& p) {
-                return p.getOwnerPlayerId() == projectileOwnerId && p.isActive();
+            [projectileOwnerId, hitPos](const Projectile& p) {
+                // Remove the projectile that matches owner and is at the hit position
+                // Use a small epsilon for floating point comparison
+                if (p.getOwnerPlayerId() == projectileOwnerId && p.isActive()) {
+                    sf::Vector2f pPos = p.getPosition();
+                    float dist = std::sqrt(
+                        (pPos.x - hitPos.x) * (pPos.x - hitPos.x) +
+                        (pPos.y - hitPos.y) * (pPos.y - hitPos.y)
+                    );
+                    return dist < 1.0f;  // Within 1 pixel - should be the same projectile
+                }
+                return false;
             }
         ),
         projectiles.end()

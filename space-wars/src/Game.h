@@ -9,6 +9,8 @@
 #include "NetworkManager.h"
 #include "ConfigReader.h"
 
+class Projectile;  // Forward declaration
+
 class Game {
 public:
     Game();
@@ -23,7 +25,7 @@ private:
     
     // Game logic
     void checkCollisions();
-    void handleHit(int projectileOwnerId, int hitSpacecraftId);
+    void handleHit(const Projectile& projectile, int hitSpacecraftId);
     void respawnSpacecraft(int playerId);
     void checkWinCondition();
     
