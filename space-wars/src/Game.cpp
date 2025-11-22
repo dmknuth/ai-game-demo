@@ -21,9 +21,6 @@ Game::Game()
     , m_networkUpdateTimer(0.0f)
     , m_reconnectTimer(0.0f)
     , m_bothPlayersConnected(false)
-    , m_messagesReceivedThisSecond(0)
-    , m_messagesSentThisSecond(0)
-    , m_instrumentationTimer(0.0f)
 {
     // Initialize SFML window (1024x768, windowed mode)
     m_window.create(sf::VideoMode(sf::Vector2u(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT)), "Space Wars");
@@ -96,34 +93,9 @@ void Game::update(float deltaTime)
     if (m_networkManager.isConnected()) {
         m_networkUpdateTimer += deltaTime;
         if (m_networkUpdateTimer >= NETWORK_UPDATE_INTERVAL) {
-            auto syncStartTime = std::chrono::high_resolution_clock::now();
             syncNetworkState();
-            auto syncEndTime = std::chrono::high_resolution_clock::now();
-            auto syncDuration = std::chrono::duration<float>(syncEndTime - syncStartTime).count() * 1000.0f;  // Convert to ms
-            
-            // Track time since last sync
-            if (m_lastNetworkSyncTime.time_since_epoch().count() > 0) {
-                auto timeSinceLastSync = std::chrono::duration<float>(syncStartTime - m_lastNetworkSyncTime).count() * 1000.0f;
-                if (timeSinceLastSync > 50.0f) {  // Warn if sync interval is > 50ms
-                    std::cout << "[PERF] Network sync interval: " << timeSinceLastSync << "ms (expected ~33ms), sync took: " << syncDuration << "ms" << std::endl;
-                }
-            }
-            m_lastNetworkSyncTime = syncStartTime;
-            
             m_networkUpdateTimer = 0.0f;
         }
-    }
-    
-    // Instrumentation - print stats every second
-    m_instrumentationTimer += deltaTime;
-    if (m_instrumentationTimer >= INSTRUMENTATION_INTERVAL) {
-        if (m_networkManager.isConnected() && m_bothPlayersConnected) {
-            std::cout << "[PERF] Network: " << m_messagesSentThisSecond << " sent/sec, " 
-                      << m_messagesReceivedThisSecond << " received/sec" << std::endl;
-        }
-        m_messagesReceivedThisSecond = 0;
-        m_messagesSentThisSecond = 0;
-        m_instrumentationTimer = 0.0f;
     }
     
     // Only update game logic if not paused and both players are connected
@@ -320,36 +292,18 @@ void Game::syncNetworkState() {
     // Both players send continuously, so they will eventually receive each other's messages
     // Even if send fails initially (peer not ready), we keep trying - ZeroMQ will queue messages
     // once the peer's PULL socket is bound and ready
-    if (m_networkManager.sendGameState(m_gameState)) {
-        m_messagesSentThisSecond++;
-    }
+    m_networkManager.sendGameState(m_gameState);
     
     // Process ALL queued messages, not just one (this prevents lag from message buildup)
-    int messagesProcessed = 0;
     while (true) {
         GameState remoteState;
-        auto receiveStartTime = std::chrono::high_resolution_clock::now();
         bool received = m_networkManager.receiveGameState(remoteState);
-        auto receiveEndTime = std::chrono::high_resolution_clock::now();
         
         if (!received) {
             break;  // No more messages
         }
         
-        messagesProcessed++;
-        m_messagesReceivedThisSecond++;
-        
-        // Measure receive operation time
-        auto receiveLatency = std::chrono::duration<float>(receiveEndTime - receiveStartTime).count() * 1000.0f;
-        if (m_lastMessageReceiveTime.time_since_epoch().count() > 0) {
-            auto timeSinceLastReceive = std::chrono::duration<float>(receiveStartTime - m_lastMessageReceiveTime).count() * 1000.0f;
-            if (timeSinceLastReceive > 100.0f) {  // Warn if > 100ms between receives
-                std::cout << "[PERF] Large gap between messages: " << timeSinceLastReceive << "ms (receive op: " << receiveLatency << "ms)" << std::endl;
-            }
-        }
-        m_lastMessageReceiveTime = receiveStartTime;
-        
-        if (messagesProcessed == 1) {
+        if (true) {  // Process first message
         // Mark that both players are now connected (we've received a message from the other player)
         if (!m_bothPlayersConnected) {
             m_bothPlayersConnected = true;
@@ -385,33 +339,27 @@ void Game::syncNetworkState() {
         
         // For subsequent messages, we still process them but only use the latest state
         // This ensures we're always using the most recent data
-        if (messagesProcessed > 1) {
-            // Update with latest received state
-            int otherPlayerId = (m_localPlayerId == 1) ? 2 : 1;
-            Spacecraft& otherSc = m_gameState.getSpacecraft(otherPlayerId);
-            const Spacecraft& remoteOtherSc = remoteState.getSpacecraft(otherPlayerId);
-            
-            otherSc.setPosition(remoteOtherSc.getPosition());
-            otherSc.setOrientation(remoteOtherSc.getOrientation());
-            otherSc.setVelocity(remoteOtherSc.getVelocity());
-            otherSc.setThrusting(remoteOtherSc.isThrusting());
-            
-            // Sync projectiles
-            m_gameState.getProjectiles().clear();
-            for (const auto& proj : remoteState.getProjectiles()) {
-                if (proj.isActive()) {
-                    m_gameState.addProjectile(proj);
-                }
+        // Update with latest received state
+        int otherPlayerId = (m_localPlayerId == 1) ? 2 : 1;
+        Spacecraft& otherSc = m_gameState.getSpacecraft(otherPlayerId);
+        const Spacecraft& remoteOtherSc = remoteState.getSpacecraft(otherPlayerId);
+        
+        otherSc.setPosition(remoteOtherSc.getPosition());
+        otherSc.setOrientation(remoteOtherSc.getOrientation());
+        otherSc.setVelocity(remoteOtherSc.getVelocity());
+        otherSc.setThrusting(remoteOtherSc.isThrusting());
+        
+        // Sync projectiles
+        m_gameState.getProjectiles().clear();
+        for (const auto& proj : remoteState.getProjectiles()) {
+            if (proj.isActive()) {
+                m_gameState.addProjectile(proj);
             }
-            
-            // Sync scores
-            m_gameState.setScore(1, remoteState.getScore(1));
-            m_gameState.setScore(2, remoteState.getScore(2));
         }
-    }
-    
-    if (messagesProcessed > 1) {
-        std::cout << "[PERF] Processed " << messagesProcessed << " queued messages in one sync" << std::endl;
+        
+        // Sync scores
+        m_gameState.setScore(1, remoteState.getScore(1));
+        m_gameState.setScore(2, remoteState.getScore(2));
     }
 }
 

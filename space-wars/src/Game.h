@@ -59,14 +59,6 @@ private:
     static constexpr float FRAME_TIME = 1.0f / TARGET_FPS;
     
     std::chrono::high_resolution_clock::time_point m_lastFrameTime;
-    
-    // Network performance instrumentation
-    std::chrono::high_resolution_clock::time_point m_lastNetworkSyncTime;
-    std::chrono::high_resolution_clock::time_point m_lastMessageReceiveTime;
-    int m_messagesReceivedThisSecond;
-    int m_messagesSentThisSecond;
-    float m_instrumentationTimer;
-    static constexpr float INSTRUMENTATION_INTERVAL = 1.0f;  // Print stats every second
 };
 
 #endif // GAME_H

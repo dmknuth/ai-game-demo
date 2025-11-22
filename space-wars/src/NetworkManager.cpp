@@ -159,7 +159,7 @@ bool NetworkManager::deserializeGameState(const std::string& data, GameState& ga
         std::istringstream iss(data);
         std::string token;
         
-        std::cout << "data: " << data << std::endl;
+//        std::cout << "data: " << data << std::endl;
         // Parse spacecraft 1
         if (std::getline(iss, token, ';') && token.substr(0, 4) == "SC1:") {
             std::string scData = token.substr(4);
