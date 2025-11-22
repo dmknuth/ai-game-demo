@@ -52,9 +52,9 @@ void Game::run()
         
         processInput();
         
-        if (!m_isPaused && !m_gameState.isGameOver()) {
-            update(deltaTime);
-        }
+        // Always call update - it handles network sync even when paused/waiting
+        // and only updates game logic when both players are connected
+        update(deltaTime);
         
         render();
     }
@@ -88,6 +88,21 @@ void Game::processInput()
 //----------------------------------------------------------------------------------------
 void Game::update(float deltaTime) 
 {
+    // Network synchronization - always send/receive when connected, even when paused
+    // This allows both players to detect each other and start the game
+    if (m_networkManager.isConnected()) {
+        m_networkUpdateTimer += deltaTime;
+        if (m_networkUpdateTimer >= NETWORK_UPDATE_INTERVAL) {
+            syncNetworkState();
+            m_networkUpdateTimer = 0.0f;
+        }
+    }
+    
+    // Only update game logic if not paused and both players are connected
+    if (m_isPaused || !m_bothPlayersConnected) {
+        return;
+    }
+    
     // Update game state
     m_gameState.updateProjectiles(deltaTime);
     m_gameState.removeInactiveProjectiles();
@@ -104,13 +119,6 @@ void Game::update(float deltaTime)
     
     // Update explosion animation
     m_renderer.updateExplosion(deltaTime);
-    
-    // Network synchronization
-    m_networkUpdateTimer += deltaTime;
-    if (m_networkUpdateTimer >= NETWORK_UPDATE_INTERVAL) {
-        syncNetworkState();
-        m_networkUpdateTimer = 0.0f;
-    }
     
     // Check network connection and handle reconnection
     if (m_networkManager.isConnected()) {
@@ -390,7 +398,9 @@ void Game::initializeNetwork() {
     // host_ip/host_port: where this player binds (receives)
     // client_ip/client_port: where this player connects (sends)
     if (m_networkManager.connect(config.clientIp, config.clientPort, config.hostPort)) {
-        std::cout << "Connected! Game starting..." << std::endl;
+        std::cout << "Connected! Waiting for other player..." << std::endl;
+        // Reset network timer to send first message immediately
+        m_networkUpdateTimer = NETWORK_UPDATE_INTERVAL;
     } else {
         std::cerr << "Failed to connect. Please check:" << std::endl;
         std::cerr << "  1. Network configuration in " << configFile << std::endl;
