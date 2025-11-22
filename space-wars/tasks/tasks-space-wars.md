@@ -22,6 +22,8 @@ Based on PRD: `prd-space-wars.md`
 - `src/InputHandler.h` - Input handling header, processes keyboard input
 - `src/InputHandler.cpp` - Input handling implementation
 - `src/Constants.h` - Game constants header, defines physics values, window size, etc.
+- `src/ConfigReader.h` - Configuration file reader header, handles parsing network configuration
+- `src/ConfigReader.cpp` - Configuration file reader implementation
 
 ### Notes
 
@@ -97,6 +99,22 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 4.11 Implement reconnection logic when connection is lost
   - [x] 4.12 Integrate NetworkManager into Game class for state synchronization
 
+- [x] 4.13 Configuration file support for network settings
+  - [x] 4.13.1 Create `src/ConfigReader.h` header file with ConfigReader class declaration
+  - [x] 4.13.2 Create `src/ConfigReader.cpp` with ConfigReader class implementation
+  - [x] 4.13.3 Design configuration file format (INI-style or key-value pairs: host_ip, host_port, client_ip, client_port)
+  - [x] 4.13.4 Implement function to read configuration file from disk
+  - [x] 4.13.5 Implement parsing logic for configuration file format
+  - [x] 4.13.6 Implement validation for IP address and port number formats
+  - [x] 4.13.7 Implement error handling for missing configuration file
+  - [x] 4.13.8 Implement error handling for invalid or malformed configuration file
+  - [x] 4.13.9 Update NetworkManager to accept configuration parameters (host_ip, host_port, client_ip, client_port)
+  - [x] 4.13.10 Update main.cpp or Game class to read configuration file at application launch
+  - [x] 4.13.11 Pass configuration values to NetworkManager for connection setup
+  - [x] 4.13.12 Display error message and exit gracefully if configuration file is missing or invalid
+  - [x] 4.13.13 Create example configuration file template (e.g., `config.example.txt`)
+  - [x] 4.13.14 Update README.md with configuration file format documentation
+
 - [x] 5.0 Rendering system and visual effects
   - [x] 5.1 Create `src/Renderer.h` header file with rendering function declarations
   - [x] 5.2 Create `src/Renderer.cpp` with rendering function implementations
@@ -153,7 +171,7 @@ Update the file after completing each sub-task, not just after completing an ent
 
 ### Known Limitations
 
-- Network connection setup requires manual code configuration (no UI yet)
+- Configuration file must be manually created and edited by users (no in-game configuration UI)
 - Font rendering requires font file loading (currently uses fallback when no font loaded)
 - Single-player testing mode (no AI opponent)
 

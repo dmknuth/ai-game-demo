@@ -27,6 +27,7 @@ set(SOURCES
     src/NetworkManager.cpp
     src/Renderer.cpp
     src/InputHandler.cpp
+    src/ConfigReader.cpp
 )
 
 # Include directories

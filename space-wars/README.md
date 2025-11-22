@@ -119,22 +119,90 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr/local ..
 
 1. Build the project (see Building section above)
 
-2. Run the executable:
+2. **Configure Network Settings:**
+   - Copy the example configuration file: `cp config.example.txt config.txt`
+   - Edit `config.txt` with your network settings (see Configuration section below)
+
+3. Run the executable:
 ```bash
 ./build/bin/SpaceWars
 ```
 
-3. **Network Setup:**
-   - Each player launches the game on their computer
-   - When prompted, enter the IP address and port of the other player's computer
-   - The game will establish a connection and synchronize game state
+4. The game will read the configuration file and attempt to connect automatically.
 
-### Example Network Configuration
+## Configuration
 
-- **Player 1:** Enter Player 2's IP address (e.g., `192.168.1.100`) and port (e.g., `5555`)
-- **Player 2:** Enter Player 1's IP address (e.g., `192.168.1.101`) and port (e.g., `5555`)
+The game uses a configuration file (`config.txt`) to specify network settings. The configuration file must be located in one of the following places:
 
-**Note:** Both players must be on the same network or have appropriate port forwarding configured.
+1. **Current working directory** - The directory from which you run the executable (recommended for development)
+2. **Same directory as the executable** - Place `config.txt` next to the `SpaceWars` executable file (recommended for distribution)
+
+**Example:** If you run the game with `./build/bin/SpaceWars`, the game will look for `config.txt` in:
+- The current working directory (where you ran the command)
+- Or `./build/bin/config.txt` (same directory as the executable)
+
+### Configuration File Format
+
+The configuration file uses a simple key-value format. Each line contains a key, an equals sign, and a value. Comments start with `#` and empty lines are ignored.
+
+**Required fields:**
+- `host_ip`: IP address where this player binds (receives messages)
+- `host_port`: Port number where this player binds (receives messages)
+- `client_ip`: IP address of the peer player (where to send messages)
+- `client_port`: Port number of the peer player (where to send messages)
+
+**Example configuration file (`config.txt`):**
+```
+host_ip=127.0.0.1
+host_port=5555
+client_ip=127.0.0.1
+client_port=5556
+```
+
+### Network Setup Examples
+
+#### Two Players on Same Computer (Localhost)
+
+**Player 1's `config.txt`:**
+```
+host_ip=127.0.0.1
+host_port=5555
+client_ip=127.0.0.1
+client_port=5556
+```
+
+**Player 2's `config.txt`:**
+```
+host_ip=127.0.0.1
+host_port=5556
+client_ip=127.0.0.1
+client_port=5555
+```
+
+#### Two Players on Different Computers
+
+**Player 1 (IP: 192.168.1.100) `config.txt`:**
+```
+host_ip=192.168.1.100
+host_port=5555
+client_ip=192.168.1.101
+client_port=5556
+```
+
+**Player 2 (IP: 192.168.1.101) `config.txt`:**
+```
+host_ip=192.168.1.101
+host_port=5556
+client_ip=192.168.1.100
+client_port=5555
+```
+
+**Note:** 
+- Both players must be on the same network or have appropriate port forwarding configured
+- Firewall settings must allow traffic on the specified ports
+- The `host_ip` should be the IP address of the computer running the game
+- The `client_ip` should be the IP address of the other player's computer
+- Ports must be different for each player on the same computer
 
 ## Controls
 
@@ -176,10 +244,19 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr/local ..
 ### Runtime Issues
 
 **Network connection fails:**
+- Verify the `config.txt` file exists in the same directory as the executable
+- Check that all required fields (host_ip, host_port, client_ip, client_port) are present and valid
 - Verify both players are on the same network
-- Check firewall settings (port must be open)
-- Ensure correct IP address and port are entered
+- Check firewall settings (ports must be open)
+- Ensure IP addresses and ports are correctly configured
 - Try using `localhost` or `127.0.0.1` for local testing
+- Check that ports are not already in use by another application
+
+**Configuration file errors:**
+- Ensure `config.txt` exists (copy from `config.example.txt` if needed)
+- Verify IP addresses are in valid format (e.g., `192.168.1.100`)
+- Verify ports are numbers between 1 and 65535
+- Check for typos in key names (must be: host_ip, host_port, client_ip, client_port)
 
 **Game runs slowly:**
 - Ensure you're using a Release build (not Debug)

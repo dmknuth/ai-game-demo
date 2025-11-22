@@ -43,17 +43,22 @@ This PRD describes a cross-platform multiplayer arcade game inspired by the 1970
 
 10. **As a player**, I want the game to pause and wait if the network connection is lost, so that we can reconnect without losing progress.
 
+11. **As a player**, I want to configure network settings via a configuration file, so that I can set up the connection without modifying code.
+
 ## 4. Functional Requirements
 
 ### 4.1 Network Connection
-1. The game must allow players to manually enter the IP address and port of the other player's computer.
-2. The game must establish a ZeroMQ connection between the two players' computers.
-3. The game must send and receive game state updates (player positions, orientations, velocities, projectile positions, scores) via ZeroMQ messages.
-4. The game must synchronize the game state so both players see the same playing field.
-5. The game must detect network disconnections.
-6. The game must pause gameplay when a network disconnection is detected.
-7. The game must display a message indicating the connection is lost and waiting for reconnection.
-8. The game must automatically resume when the network connection is restored.
+1. The game must read network configuration from a configuration file at application launch.
+2. The configuration file must specify the host IP address and port (for binding the local socket).
+3. The configuration file must specify the client IP address and port (for connecting to the peer).
+4. The game must establish a ZeroMQ connection between the two players' computers using the configuration file settings.
+5. The game must send and receive game state updates (player positions, orientations, velocities, projectile positions, scores) via ZeroMQ messages.
+6. The game must synchronize the game state so both players see the same playing field.
+7. The game must detect network disconnections.
+8. The game must pause gameplay when a network disconnection is detected.
+9. The game must display a message indicating the connection is lost and waiting for reconnection.
+10. The game must automatically resume when the network connection is restored.
+11. If the configuration file is missing or invalid, the game must display an error message and exit gracefully.
 
 ### 4.2 Player Controls
 9. Player 1 must control their spacecraft using arrow keys: Left Arrow (turn left), Right Arrow (turn right), Up Arrow (thrust forward).
@@ -126,8 +131,9 @@ The following features are explicitly **not** included in Version 0.1:
 8. **Customizable Controls:** Controls are fixed to arrow keys and spacebar; no key remapping.
 9. **Different Game Modes:** Only one game mode (first to 5 points wins).
 10. **Player Names or Profiles:** No user accounts or persistent player data.
-11. **Network Discovery:** Players must manually enter IP addresses; no automatic discovery.
+11. **Network Discovery:** Players must manually configure IP addresses via configuration file; no automatic discovery.
 12. **Windows Support:** Windows is not a target platform for this version.
+13. **In-Game Configuration UI:** No graphical interface for editing network settings; configuration must be done via text file.
 
 ## 6. Design Considerations
 
@@ -171,6 +177,13 @@ The following features are explicitly **not** included in Version 0.1:
 - **Update Frequency:** 30 updates per second (configurable via `NETWORK_UPDATE_INTERVAL`)
 - **State Synchronization:** Both players send their local state; remote player's spacecraft state is synchronized from received messages
 - **Connection Setup:** Each player binds locally on a port and connects to peer's IP:port for sending
+- **Configuration File:** Network settings (host IP, host port, client IP, client port) are read from a configuration file at application launch
+- **Configuration File Format:** Text-based format (e.g., INI-style or key-value pairs) specifying:
+  - `host_ip`: IP address to bind the local socket (e.g., "127.0.0.1" or "0.0.0.0")
+  - `host_port`: Port number to bind the local socket (e.g., "5555")
+  - `client_ip`: IP address of the peer to connect to (e.g., "192.168.1.100")
+  - `client_port`: Port number of the peer to connect to (e.g., "5556")
+- **Configuration File Location:** Configuration file should be located in the application directory or a standard configuration location (e.g., `config.txt` or `network.conf`)
 
 ### 7.4 Game Loop
 - Standard game loop: Input → Update → Render
@@ -211,6 +224,7 @@ The following features are explicitly **not** included in Version 0.1:
 8. **Message Protocol:** ✅ **Text-based format** - Simple, human-readable protocol for game state synchronization
 9. **Update Rate:** ✅ **30 updates/second** - Balanced between responsiveness and network efficiency
 10. **Input Handling:** ✅ **Event-based, immediate processing** - Uses SFML event system (KeyPressed/KeyReleased) for SFML 3.0 compatibility; processes input immediately each frame
+11. **Configuration File:** ✅ **Text-based configuration file** - Network settings (host/client IP addresses and ports) read from configuration file at application launch
 
 ## 10. Implementation Notes
 
@@ -235,7 +249,7 @@ The following features are explicitly **not** included in Version 0.1:
 
 ### 10.2 Known Limitations
 
-- **Network Connection Setup:** Requires manual code configuration (no UI for IP/port entry yet)
+- **Configuration File Management:** Configuration file must be manually created and edited by users (no in-game configuration UI)
 - **Font Rendering:** Requires font file loading (currently uses fallback when no font loaded)
 - **Single-Player Testing:** No AI opponent for single-player testing mode
 - **Ubuntu Testing:** Build tested on macOS; Ubuntu Linux testing pending (build configuration ready)

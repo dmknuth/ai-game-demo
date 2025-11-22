@@ -6,6 +6,8 @@
 #include <ctime>
 #include <cmath>
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -284,66 +286,72 @@ void Game::syncNetworkState() {
 }
 
 //----------------------------------------------------------------------------------------
+std::string Game::findConfigFile() {
+    // Configuration file location priority:
+    // 1. Current working directory (where the user runs the command)
+    // 2. Same directory as the executable (if we can determine it)
+    
+    std::string configFile = "config.txt";
+    
+    // Check current working directory first
+    if (std::ifstream(configFile).good()) {
+        return configFile;
+    }
+    
+    // Try executable directory (for when running from different directory)
+    // On Unix-like systems, we can try to get the executable path
+    // For now, we'll rely on current working directory
+    // Users should either:
+    // - Place config.txt in the same directory as the executable and run from there
+    // - Or place config.txt in the current working directory
+    
+    return configFile;  // Return the filename to try
+}
+
+//----------------------------------------------------------------------------------------
 void Game::initializeNetwork() {
-    std::cout << "\n=== Space Wars Network Setup ===" << std::endl;
-    std::cout << "Enter connection type:" << std::endl;
-    std::cout << "1. Host (wait for other player to connect)" << std::endl;
-    std::cout << "2. Connect to other player" << std::endl;
-    std::cout << "3. Skip network (single-player testing)" << std::endl;
-    std::cout << "Choice (1/2/3): ";
+    ConfigReader configReader;
+    NetworkConfig config;
     
-    int choice;
-    std::cin >> choice;
+    // Find configuration file (tries multiple locations)
+    std::string configFile = findConfigFile();
     
-    if (choice == 1) {
-        // Host mode - bind and wait for connection
-        int localPort;
-        std::cout << "Enter port to listen on (e.g., 5555): ";
-        std::cin >> localPort;
-        
-        // For hosting, we need to set up the receive socket
-        // The send socket will be created when we know the client's address
-        // For now, we'll use a simplified approach where host binds on localPort
-        // and expects client to connect to localPort+1 for sending
-        std::cout << "Waiting for connection on port " << localPort << "..." << std::endl;
-        std::cout << "Tell the other player to connect to your IP address and port " << (localPort + 1) << std::endl;
-        
-        // Bind for receiving (host receives on localPort)
-        // Host sends to client on client's port (we'll need client's IP and port)
-        // For simplicity, let's use: host receives on localPort, sends to peerPort
-        int peerPort;
-        std::string peerIp;
-        std::cout << "Enter peer's IP address (for sending): ";
-        std::cin >> peerIp;
-        std::cout << "Enter peer's port (for sending, e.g., " << (localPort + 1) << "): ";
-        std::cin >> peerPort;
-        
-        if (m_networkManager.connect(peerIp, peerPort, localPort)) {
-            std::cout << "Connected! Game starting..." << std::endl;
-        } else {
-            std::cout << "Failed to connect. Continuing in single-player mode." << std::endl;
-        }
-    } else if (choice == 2) {
-        // Client mode - connect to host
-        std::string peerIp;
-        int peerPort, localPort;
-        
-        std::cout << "Enter host's IP address: ";
-        std::cin >> peerIp;
-        std::cout << "Enter host's port (for sending to host): ";
-        std::cin >> peerPort;
-        std::cout << "Enter your local port (for receiving, e.g., " << (peerPort + 1) << "): ";
-        std::cin >> localPort;
-        
-        if (m_networkManager.connect(peerIp, peerPort, localPort)) {
-            std::cout << "Connected! Game starting..." << std::endl;
-        } else {
-            std::cout << "Failed to connect. Continuing in single-player mode." << std::endl;
-        }
+    if (!configReader.readConfig(configFile, config)) {
+        std::cerr << "\n=== ERROR: Failed to read configuration file ===" << std::endl;
+        std::cerr << "Configuration file '" << configFile << "' is missing or invalid." << std::endl;
+        std::cerr << "\nLocation: The config.txt file should be in:" << std::endl;
+        std::cerr << "  - The current working directory (where you run the command)" << std::endl;
+        std::cerr << "  - Or the same directory as the SpaceWars executable" << std::endl;
+        std::cerr << "\nPlease create a configuration file with the following format:" << std::endl;
+        std::cerr << "  host_ip=127.0.0.1" << std::endl;
+        std::cerr << "  host_port=5555" << std::endl;
+        std::cerr << "  client_ip=127.0.0.1" << std::endl;
+        std::cerr << "  client_port=5556" << std::endl;
+        std::cerr << "\nSee config.example.txt for an example configuration file." << std::endl;
+        std::cerr << "Exiting..." << std::endl;
+        m_isRunning = false;
+        return;
+    }
+    
+    std::cout << "\n=== Space Wars Network Configuration ===" << std::endl;
+    std::cout << "Configuration loaded from: " << configFile << std::endl;
+    std::cout << "Host IP: " << config.hostIp << std::endl;
+    std::cout << "Host Port: " << config.hostPort << std::endl;
+    std::cout << "Client IP: " << config.clientIp << std::endl;
+    std::cout << "Client Port: " << config.clientPort << std::endl;
+    std::cout << "Connecting..." << std::endl;
+    
+    // Connect using configuration
+    // host_ip/host_port: where this player binds (receives)
+    // client_ip/client_port: where this player connects (sends)
+    if (m_networkManager.connect(config.clientIp, config.clientPort, config.hostPort)) {
+        std::cout << "Connected! Game starting..." << std::endl;
     } else {
-        // Skip network
-        std::cout << "Skipping network connection. Single-player mode." << std::endl;
-        std::cout << "Note: You can test the game locally, but network features won't work." << std::endl;
+        std::cerr << "Failed to connect. Please check:" << std::endl;
+        std::cerr << "  1. Network configuration in " << configFile << std::endl;
+        std::cerr << "  2. Firewall settings" << std::endl;
+        std::cerr << "  3. Other player is running and ready to connect" << std::endl;
+        std::cerr << "Continuing in single-player mode." << std::endl;
     }
     
     std::cout << std::endl;

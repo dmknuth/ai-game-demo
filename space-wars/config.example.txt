@@ -1,0 +1,32 @@
+# Space Wars Network Configuration File
+# Copy this file to 'config.txt' and modify the values for your network setup
+#
+# Configuration format:
+#   host_ip: IP address where this player binds (receives messages)
+#   host_port: Port number where this player binds (receives messages)
+#   client_ip: IP address of the peer player (where to send messages)
+#   client_port: Port number of the peer player (where to send messages)
+#
+# For two players on the same computer (localhost):
+#   Player 1: host_ip=127.0.0.1, host_port=5555, client_ip=127.0.0.1, client_port=5556
+#   Player 2: host_ip=127.0.0.1, host_port=5556, client_ip=127.0.0.1, client_port=5555
+#
+# For two players on different computers:
+#   Player 1 (IP: 192.168.1.100):
+#     host_ip=192.168.1.100
+#     host_port=5555
+#     client_ip=192.168.1.101
+#     client_port=5556
+#
+#   Player 2 (IP: 192.168.1.101):
+#     host_ip=192.168.1.101
+#     host_port=5556
+#     client_ip=192.168.1.100
+#     client_port=5555
+
+# Network configuration
+host_ip=127.0.0.1
+host_port=5555
+client_ip=127.0.0.1
+client_port=5556
+

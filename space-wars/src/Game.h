@@ -7,6 +7,7 @@
 #include "InputHandler.h"
 #include "Renderer.h"
 #include "NetworkManager.h"
+#include "ConfigReader.h"
 
 class Game {
 public:
@@ -29,6 +30,7 @@ private:
     // Network
     void initializeNetwork();
     void syncNetworkState();
+    std::string findConfigFile();  // Helper to locate config.txt
     
     // Game components
     sf::RenderWindow m_window;
