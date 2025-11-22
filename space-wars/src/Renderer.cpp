@@ -15,6 +15,43 @@ Renderer::Renderer()
     // Try to load a default font (SFML 3.0 may have built-in font support)
     // For now, we'll use SFML's default rendering which should work
     m_fontLoaded = false;  // We'll use SFML's default text rendering
+
+    // Font loading
+    for (const auto& path : {
+        #ifdef SFML_SYSTEM_WINDOWS
+        // Windows-specific code
+        #elif defined(SFML_SYSTEM_LINUX)
+        "/snap/gnome-42-2204/202/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+        #elif defined(SFML_SYSTEM_MACOS)
+        "/System/Library/Fonts/Monaco.ttf"
+        #elif defined(SFML_SYSTEM_IOS)
+            // iOS-specific code
+        #elif defined(SFML_SYSTEM_ANDROID)
+            // Android-specific code
+        #elif defined(SFML_SYSTEM_FREEBSD)
+            // FreeBSD-specific code
+        #endif
+            }) {
+        if (m_font.openFromFile(path)) {
+            m_font.setSmooth(true);
+            m_fontLoaded = true;
+            break;
+        }
+    }
+/*
+    sf::Text statusText(m_font);
+    if (m_fontLoaded) {
+        std::string message("Game Arena");
+        statusText.setString(message.c_str());
+        statusText.setCharacterSize(12);
+        statusText.setFillColor(sf::Color::Black);
+        statusText.setPosition({10.f, 10.f});
+        window.draw(statusText);
+    } else {
+        statusText.setString("No font found");
+        statusText.setFillColor(sf::Color::Red);
+    }
+*/
 }
 
 void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
@@ -191,7 +228,7 @@ void Renderer::drawScore(sf::RenderWindow& window, int score1, int score2) {
         sf::Text text2(m_font, score2Text);
         text2.setCharacterSize(24);
         text2.setFillColor(sf::Color::Cyan);
-        text2.setPosition(sf::Vector2f(Constants::WINDOW_WIDTH - 150, 10));
+        text2.setPosition(sf::Vector2f(Constants::WINDOW_WIDTH - 200, 10));
         
         window.draw(text1);
         window.draw(text2);
