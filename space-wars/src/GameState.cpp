@@ -11,15 +11,19 @@ GameState::GameState()
 
 void GameState::initializeSpacecraft() {
     // Spawn both spacecraft at center of screen
-    sf::Vector2f center(
-        Constants::WINDOW_WIDTH / 2.0f,
+    sf::Vector2f center1(
+        Constants::WINDOW_WIDTH / 2.0f - 40,
+        Constants::WINDOW_HEIGHT / 2.0f
+    );
+    sf::Vector2f center2(
+        Constants::WINDOW_WIDTH / 2.0f + 40,
         Constants::WINDOW_HEIGHT / 2.0f
     );
     
     // Spacecraft 1 faces right (0 degrees), Spacecraft 2 faces left (180 degrees)
     // They start facing away from each other
-    m_spacecraft1 = Spacecraft(center, 0.0f, 1);
-    m_spacecraft2 = Spacecraft(center, 180.0f, 2);
+    m_spacecraft1 = Spacecraft(center1, 180.0f, 1);
+    m_spacecraft2 = Spacecraft(center2, 0.0f, 2);
 }
 
 Spacecraft& GameState::getSpacecraft(int playerId) {
