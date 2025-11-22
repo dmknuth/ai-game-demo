@@ -44,7 +44,7 @@ private:
     bool m_isPaused;
     int m_localPlayerId;  // 1 or 2
     float m_networkUpdateTimer;
-    static constexpr float NETWORK_UPDATE_INTERVAL = 1.0f / 30.0f;  // 30 updates per second
+    static constexpr float NETWORK_UPDATE_INTERVAL = 1.0f / 60.0f;  // 60 updates per second (matches frame rate for lower latency)
     
     // Network reconnection
     NetworkConfig m_networkConfig;  // Store config for reconnection attempts
@@ -59,6 +59,14 @@ private:
     static constexpr float FRAME_TIME = 1.0f / TARGET_FPS;
     
     std::chrono::high_resolution_clock::time_point m_lastFrameTime;
+    
+    // Network performance instrumentation
+    std::chrono::high_resolution_clock::time_point m_lastNetworkSyncTime;
+    std::chrono::high_resolution_clock::time_point m_lastMessageReceiveTime;
+    int m_messagesReceivedThisSecond;
+    int m_messagesSentThisSecond;
+    float m_instrumentationTimer;
+    static constexpr float INSTRUMENTATION_INTERVAL = 1.0f;  // Print stats every second
 };
 
 #endif // GAME_H
