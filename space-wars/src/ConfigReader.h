@@ -8,12 +8,16 @@ struct NetworkConfig {
     int hostPort;
     std::string clientIp;
     int clientPort;
+    int hostPlayerId;      // Which player this configuration is for (1 or 2)
+    int clientPlayerId;    // Which player we're connecting to (1 or 2)
     
     NetworkConfig()
         : hostIp("127.0.0.1")
         , hostPort(5555)
         , clientIp("127.0.0.1")
         , clientPort(5556)
+        , hostPlayerId(1)
+        , clientPlayerId(2)
     {}
 };
 

@@ -17,7 +17,7 @@
 Game::Game() 
     : m_isRunning(true)
     , m_isPaused(false)
-    , m_localPlayerId(1)  // Default to player 1, could be made configurable
+    , m_localPlayerId(1)  // Will be set from config file
     , m_networkUpdateTimer(0.0f)
     , m_reconnectTimer(0.0f)
 {
@@ -349,6 +349,8 @@ void Game::initializeNetwork() {
         std::cerr << "  host_port=5555" << std::endl;
         std::cerr << "  client_ip=127.0.0.1" << std::endl;
         std::cerr << "  client_port=5556" << std::endl;
+        std::cerr << "  host=1" << std::endl;
+        std::cerr << "  client=2" << std::endl;
         std::cerr << "\nSee config.example.txt for an example configuration file." << std::endl;
         std::cerr << "Exiting..." << std::endl;
         m_isRunning = false;
@@ -361,10 +363,15 @@ void Game::initializeNetwork() {
     std::cout << "Host Port: " << config.hostPort << std::endl;
     std::cout << "Client IP: " << config.clientIp << std::endl;
     std::cout << "Client Port: " << config.clientPort << std::endl;
+    std::cout << "You are Player: " << config.hostPlayerId << std::endl;
+    std::cout << "Connecting to Player: " << config.clientPlayerId << std::endl;
     std::cout << "Connecting..." << std::endl;
     
     // Store configuration for reconnection attempts
     m_networkConfig = config;
+    
+    // Set local player ID from configuration
+    m_localPlayerId = config.hostPlayerId;
     
     // Connect using configuration
     // host_ip/host_port: where this player binds (receives)

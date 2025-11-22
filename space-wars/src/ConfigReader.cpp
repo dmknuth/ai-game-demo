@@ -105,6 +105,8 @@ bool ConfigReader::readConfig(const std::string& filename, NetworkConfig& config
     bool hasHostPort = false;
     bool hasClientIp = false;
     bool hasClientPort = false;
+    bool hasHostPlayerId = false;
+    bool hasClientPlayerId = false;
     
     while (std::getline(file, line)) {
         std::string key, value;
@@ -142,6 +144,20 @@ bool ConfigReader::readConfig(const std::string& filename, NetworkConfig& config
             }
             config.clientPort = port;
             hasClientPort = true;
+        } else if (lowerKey == "host") {
+            int playerId;
+            if (!stringToInt(value, playerId) || (playerId != 1 && playerId != 2)) {
+                return false;  // Invalid player ID (must be 1 or 2)
+            }
+            config.hostPlayerId = playerId;
+            hasHostPlayerId = true;
+        } else if (lowerKey == "client") {
+            int playerId;
+            if (!stringToInt(value, playerId) || (playerId != 1 && playerId != 2)) {
+                return false;  // Invalid player ID (must be 1 or 2)
+            }
+            config.clientPlayerId = playerId;
+            hasClientPlayerId = true;
         }
         // Ignore unknown keys (for future extensibility)
     }
@@ -149,6 +165,19 @@ bool ConfigReader::readConfig(const std::string& filename, NetworkConfig& config
     file.close();
     
     // Check that all required fields are present
-    return hasHostIp && hasHostPort && hasClientIp && hasClientPort;
+    // Note: host and client player IDs are optional (default to 1 and 2 if not specified)
+    if (!hasHostIp || !hasHostPort || !hasClientIp || !hasClientPort) {
+        return false;
+    }
+    
+    // If player IDs are not specified, use defaults (already set in constructor)
+    // If they are specified, validate they are different
+    if (hasHostPlayerId && hasClientPlayerId) {
+        if (config.hostPlayerId == config.clientPlayerId) {
+            return false;  // Host and client cannot be the same player
+        }
+    }
+    
+    return true;
 }
 

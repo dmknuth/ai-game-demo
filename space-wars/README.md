@@ -151,12 +151,19 @@ The configuration file uses a simple key-value format. Each line contains a key,
 - `client_ip`: IP address of the peer player (where to send messages)
 - `client_port`: Port number of the peer player (where to send messages)
 
+**Optional fields:**
+- `host`: Which player this configuration is for (1 or 2). Defaults to 1 if not specified.
+- `client`: Which player you're connecting to (1 or 2). Defaults to 2 if not specified.
+- Note: `host` and `client` must be different (one must be 1, the other must be 2).
+
 **Example configuration file (`config.txt`):**
 ```
 host_ip=127.0.0.1
 host_port=5555
 client_ip=127.0.0.1
 client_port=5556
+host=1
+client=2
 ```
 
 ### Network Setup Examples
@@ -169,6 +176,8 @@ host_ip=127.0.0.1
 host_port=5555
 client_ip=127.0.0.1
 client_port=5556
+host=1
+client=2
 ```
 
 **Player 2's `config.txt`:**
@@ -177,6 +186,8 @@ host_ip=127.0.0.1
 host_port=5556
 client_ip=127.0.0.1
 client_port=5555
+host=2
+client=1
 ```
 
 #### Two Players on Different Computers
@@ -187,6 +198,8 @@ host_ip=192.168.1.100
 host_port=5555
 client_ip=192.168.1.101
 client_port=5556
+host=1
+client=2
 ```
 
 **Player 2 (IP: 192.168.1.101) `config.txt`:**
@@ -195,6 +208,8 @@ host_ip=192.168.1.101
 host_port=5556
 client_ip=192.168.1.100
 client_port=5555
+host=2
+client=1
 ```
 
 **Note:** 

@@ -30,3 +30,10 @@ host_port=5555
 client_ip=127.0.0.1
 client_port=5556
 
+# Player identification
+# host: Which player this configuration is for (1 or 2)
+# client: Which player you're connecting to (1 or 2)
+# Note: host and client must be different (1 and 2, or 2 and 1)
+host=1
+client=2
+
