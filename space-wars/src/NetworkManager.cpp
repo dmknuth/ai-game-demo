@@ -49,12 +49,22 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
         
         // Create PUSH socket for sending (connect to peer)
         m_sendSocket = std::make_unique<zmq::socket_t>(*m_context, ZMQ_PUSH);
+        
+        // Set send high water mark to allow queuing messages when peer isn't ready
+        // This helps prevent message loss during initial connection
+        int sendHWM = 1000;  // Allow up to 1000 messages to queue
+        m_sendSocket->set(zmq::sockopt::sndhwm, sendHWM);
+        
         std::string sendAddress = createAddress(peerIp, peerPort);
         m_sendSocket->connect(sendAddress);
         
         // Set socket options for non-blocking receive
         int timeout = 100;  // 100ms timeout
         m_receiveSocket->set(zmq::sockopt::rcvtimeo, timeout);
+        
+        // Set receive high water mark
+        int recvHWM = 1000;
+        m_receiveSocket->set(zmq::sockopt::rcvhwm, recvHWM);
         
         // Set linger to 0 so sockets close immediately (prevents hanging on shutdown)
         int linger = 0;
@@ -249,7 +259,6 @@ bool NetworkManager::deserializeGameState(const std::string& data, GameState& ga
 bool NetworkManager::sendGameState(const GameState& gameState) 
 {
     if (!m_connected || !m_sendSocket) {
-        std::cout << "No game state sent" << std::endl;
         return false;
     }
     
@@ -258,13 +267,20 @@ bool NetworkManager::sendGameState(const GameState& gameState)
         zmq::message_t message(data.size());
         memcpy(message.data(), data.c_str(), data.size());
         
+        // Use dontwait to avoid blocking
+        // With HWM set, messages will queue if the peer isn't ready yet
         zmq::send_result_t result = m_sendSocket->send(message, zmq::send_flags::dontwait);
         if (!result.has_value()) {
-            m_connectionLost = true;
+            // Send failed - this can happen if:
+            // 1. The send buffer is full (HWM reached) - peer might be slow
+            // 2. The peer's PULL socket isn't bound yet - normal during initial connection
+            // Don't mark as connection lost during initial connection attempts
+            // The message will be queued once the peer is ready (if HWM allows)
             return false;
         }
         return true;
     } catch (const std::exception& e) {
+        // Exceptions during send usually indicate a real problem
         std::cerr << "Failed to send game state: " << e.what() << std::endl;
         m_connectionLost = true;
         return false;

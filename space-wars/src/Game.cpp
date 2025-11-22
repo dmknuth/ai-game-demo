@@ -288,7 +288,10 @@ void Game::syncNetworkState() {
         return;
     }
     
-    // Send local game state
+    // Always send local game state first (this breaks the deadlock)
+    // Both players send continuously, so they will eventually receive each other's messages
+    // Even if send fails initially (peer not ready), we keep trying - ZeroMQ will queue messages
+    // once the peer's PULL socket is bound and ready
     m_networkManager.sendGameState(m_gameState);
     
     // Receive remote game state (non-blocking)
@@ -399,8 +402,10 @@ void Game::initializeNetwork() {
     // client_ip/client_port: where this player connects (sends)
     if (m_networkManager.connect(config.clientIp, config.clientPort, config.hostPort)) {
         std::cout << "Connected! Waiting for other player..." << std::endl;
-        // Reset network timer to send first message immediately
+        // Reset network timer to send first message immediately on next update
         m_networkUpdateTimer = NETWORK_UPDATE_INTERVAL;
+        // Note: We don't send immediately here because the peer's PULL socket might not be bound yet
+        // The first send will happen in the next update() call, by which time both players should be ready
     } else {
         std::cerr << "Failed to connect. Please check:" << std::endl;
         std::cerr << "  1. Network configuration in " << configFile << std::endl;
