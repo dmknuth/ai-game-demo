@@ -295,6 +295,10 @@ void Game::syncNetworkState() {
     m_networkManager.sendGameState(m_gameState);
     
     // Process ALL queued messages, not just one (this prevents lag from message buildup)
+    // Use the latest message received (most up-to-date state)
+    GameState latestRemoteState;
+    bool receivedAny = false;
+    
     while (true) {
         GameState remoteState;
         bool received = m_networkManager.receiveGameState(remoteState);
@@ -303,20 +307,22 @@ void Game::syncNetworkState() {
             break;  // No more messages
         }
         
-        if (true) {  // Process first message
+        receivedAny = true;
+        latestRemoteState = remoteState;  // Keep the latest state
+        
         // Mark that both players are now connected (we've received a message from the other player)
         if (!m_bothPlayersConnected) {
             m_bothPlayersConnected = true;
             std::cout << "Player " << ((m_localPlayerId == 1) ? 2 : 1) << " has joined! Game starting..." << std::endl;
         }
-        
-        // Merge remote state (for now, just sync the other player's spacecraft)
-        // In a full implementation, you'd merge more carefully
-        
+    }
+    
+    // Only process if we received at least one message
+    if (receivedAny) {
         // Sync other player's spacecraft
         int otherPlayerId = (m_localPlayerId == 1) ? 2 : 1;
         Spacecraft& otherSc = m_gameState.getSpacecraft(otherPlayerId);
-        const Spacecraft& remoteOtherSc = remoteState.getSpacecraft(otherPlayerId);
+        const Spacecraft& remoteOtherSc = latestRemoteState.getSpacecraft(otherPlayerId);
         
         // Update other player's spacecraft from remote state
         otherSc.setPosition(remoteOtherSc.getPosition());
@@ -326,40 +332,16 @@ void Game::syncNetworkState() {
         
         // Sync projectiles (clear and add remote projectiles)
         m_gameState.getProjectiles().clear();
-        for (const auto& proj : remoteState.getProjectiles()) {
+        for (const auto& proj : latestRemoteState.getProjectiles()) {
             if (proj.isActive()) {
                 m_gameState.addProjectile(proj);
             }
         }
         
-        // Sync scores
-        m_gameState.setScore(1, remoteState.getScore(1));
-        m_gameState.setScore(2, remoteState.getScore(2));
-        }
-        
-        // For subsequent messages, we still process them but only use the latest state
-        // This ensures we're always using the most recent data
-        // Update with latest received state
-        int otherPlayerId = (m_localPlayerId == 1) ? 2 : 1;
-        Spacecraft& otherSc = m_gameState.getSpacecraft(otherPlayerId);
-        const Spacecraft& remoteOtherSc = remoteState.getSpacecraft(otherPlayerId);
-        
-        otherSc.setPosition(remoteOtherSc.getPosition());
-        otherSc.setOrientation(remoteOtherSc.getOrientation());
-        otherSc.setVelocity(remoteOtherSc.getVelocity());
-        otherSc.setThrusting(remoteOtherSc.isThrusting());
-        
-        // Sync projectiles
-        m_gameState.getProjectiles().clear();
-        for (const auto& proj : remoteState.getProjectiles()) {
-            if (proj.isActive()) {
-                m_gameState.addProjectile(proj);
-            }
-        }
-        
-        // Sync scores
-        m_gameState.setScore(1, remoteState.getScore(1));
-        m_gameState.setScore(2, remoteState.getScore(2));
+        // IMPORTANT: Only sync the OTHER player's score, not our own
+        // Our local score is authoritative - we don't overwrite it with potentially stale remote data
+        m_gameState.setScore(otherPlayerId, latestRemoteState.getScore(otherPlayerId));
+        // Keep our own score (m_localPlayerId) - don't overwrite it!
     }
 }
 
