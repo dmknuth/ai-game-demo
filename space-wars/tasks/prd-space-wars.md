@@ -67,6 +67,7 @@ This PRD describes a cross-platform multiplayer arcade game inspired by the 1970
 12. Player 2 must fire weapons using the Spacebar.
 13. Controls must be responsive and update the local game state immediately.
 14. Control inputs must be transmitted to the other player's computer via ZeroMQ.
+15. Players must be able to rapidly fire multiple projectiles by repeatedly pressing the spacebar.
 
 ### 4.3 Spacecraft Rendering
 15. Each spacecraft must be rendered as a line drawing (vector graphics style).
@@ -83,47 +84,52 @@ This PRD describes a cross-platform multiplayer arcade game inspired by the 1970
 24. The projectile must move at a constant velocity.
 25. The projectile must disappear when it reaches any edge of the screen.
 26. The projectile must be synchronized across both players' screens.
+27. Players must be able to fire multiple projectiles simultaneously by rapidly pressing the spacebar.
+28. Each projectile must travel independently and be tracked separately.
 
 ### 4.5 Collision Detection
-27. The game must detect when a projectile collides with a spacecraft.
-28. When a projectile hits a spacecraft, an explosion animation must be displayed at the collision point.
-29. The explosion animation must be visible to both players.
-30. When a spacecraft is hit, the player who fired the projectile must have their score incremented by 1.
-31. When a spacecraft is destroyed, it must reappear at a random location on the screen.
-32. The destroyed spacecraft must reappear with a neutral orientation (not moving).
+29. The game must detect when a projectile collides with a spacecraft.
+30. When a projectile hits a spacecraft, an explosion animation must be displayed at the collision point.
+31. The explosion animation must be visible to both players.
+32. When a spacecraft is hit, the player who fired the projectile must have their score incremented by 1.
+33. When a spacecraft is destroyed, it must reappear at a random location on the screen.
+34. The destroyed spacecraft must reappear with a neutral orientation (not moving).
+35. The respawn location must be different from the initial spawn position for that player.
+36. The respawn location must be different from the position where the spacecraft was just destroyed.
+37. Only the specific projectile that hit must be removed; other projectiles from the same player must continue.
 
 ### 4.6 Screen Wrapping
-33. When a spacecraft reaches the left edge of the screen, it must appear at the right edge and continue moving.
-34. When a spacecraft reaches the right edge of the screen, it must appear at the left edge and continue moving.
-35. When a spacecraft reaches the top edge of the screen, it must appear at the bottom edge and continue moving.
-36. When a spacecraft reaches the bottom edge of the screen, it must appear at the top edge and continue moving.
+38. When a spacecraft reaches the left edge of the screen, it must appear at the right edge and continue moving.
+39. When a spacecraft reaches the right edge of the screen, it must appear at the left edge and continue moving.
+40. When a spacecraft reaches the top edge of the screen, it must appear at the bottom edge and continue moving.
+41. When a spacecraft reaches the bottom edge of the screen, it must appear at the top edge and continue moving.
 
 ### 4.7 Game Initialization
-37. At game start, both spacecraft must spawn at the center of the screen.
-38. The two spacecraft must face away from each other (180 degrees apart) at game start.
-39. Both players' scores must start at 0.
-40. The game must display both players' current scores on screen.
+42. At game start, Player 1's spacecraft must spawn near the left edge of the screen (approximately 100 pixels from the left edge, centered vertically).
+43. At game start, Player 2's spacecraft must spawn near the right edge of the screen (approximately 100 pixels from the right edge, centered vertically).
+44. The two spacecraft must face toward each other at game start (Player 1 faces right, Player 2 faces left).
+45. Both players' scores must start at 0.
+46. The game must display both players' current scores on screen.
 
 ### 4.8 Win Condition
-41. The game must track each player's score.
-42. The game must end when either player reaches a score of 5.
-43. The game must display a message indicating which player won.
-44. The game must allow players to restart or exit after a win.
+47. The game must track each player's score.
+48. The game must end when either player reaches a score of 5.
+49. The game must display a message indicating which player won.
+50. The game must allow players to restart or exit after a win.
 
 ### 4.9 Cross-Platform Support
-45. The game must compile and run on macOS.
-46. The game must compile and run on Ubuntu Linux.
-47. The game must use C++23 standard features.
-48. The game must use SFML for graphics rendering and window management.
-49. The game must use ZeroMQ for network messaging.
+51. The game must compile and run on macOS.
+52. The game must compile and run on Ubuntu Linux.
+53. The game must use C++23 standard features.
+54. The game must use SFML for graphics rendering and window management.
+55. The game must use ZeroMQ for network messaging.
 
 ## 5. Non-Goals (Out of Scope)
 
 The following features are explicitly **not** included in Version 0.1:
 
 1. **AI Opponent:** Single-player mode or computer-controlled opponent is not included.
-2. **Multiple Projectiles:** Players cannot fire multiple projectiles simultaneously; only one projectile per player at a time.
-3. **Power-ups or Special Weapons:** No additional weapon types or power-ups.
+2. **Power-ups or Special Weapons:** No additional weapon types or power-ups.
 4. **Sound Effects or Music:** Audio is not included in this version.
 5. **Menu System:** No main menu, settings menu, or pause menu (beyond network reconnection pause).
 6. **Game Replay or Recording:** No ability to record or replay games.
@@ -195,6 +201,9 @@ The following features are explicitly **not** included in Version 0.1:
 - Spacecraft should have acceleration and velocity for thrust mechanics
 - Projectiles should have constant velocity
 - Collision detection should use bounding boxes or simple geometric shapes
+- A gravitational force exists at the center of the screen that pulls all objects (spacecraft and projectiles) toward the center
+- The gravitational force strength decreases with distance from the center (inverse square law: F = G / r²)
+- The gravitational force affects both spacecraft and projectiles, creating dynamic gameplay where players must account for gravity when maneuvering and aiming
 
 ### 7.6 Code Structure (Implemented)
 - **Classes:** Spacecraft, Projectile, GameState, NetworkManager, Renderer, InputHandler, Game
@@ -247,6 +256,25 @@ The following features are explicitly **not** included in Version 0.1:
    - Implemented bidirectional PUSH/PULL ZeroMQ sockets for peer-to-peer communication
    - Each player binds locally and connects to peer for sending/receiving
 
+5. **Multiple Projectiles:**
+   - Removed limitation of one projectile per player
+   - Players can now fire multiple projectiles simultaneously by rapidly pressing spacebar
+   - Each projectile is tracked independently and synchronized across the network
+
+6. **Gravitational Force:**
+   - Implemented gravitational force at screen center that pulls all objects toward center
+   - Uses inverse square law for realistic physics (force decreases with distance)
+   - Affects both spacecraft and projectiles, adding strategic depth to gameplay
+
+7. **Initial Spawn Positions:**
+   - Changed from center spawn to edge spawn positions
+   - Player 1 spawns near left edge (100 pixels from left), Player 2 near right edge (100 pixels from right)
+   - Both face toward each other at game start
+
+8. **Improved Respawn Logic:**
+   - Respawn positions are now random and avoid both initial spawn position and destruction location
+   - Ensures variety in respawn locations and prevents immediate re-engagement at same position
+
 ### 10.2 Known Limitations
 
 - **Configuration File Management:** Configuration file must be manually created and edited by users (no in-game configuration UI)
@@ -263,6 +291,8 @@ All physics values are defined in `Constants.h`:
 - Spacecraft max velocity: 300 px/s
 - Spacecraft friction: 0.98 (velocity multiplier per frame)
 - Projectile speed: 400 px/s
+- Gravitational strength: 50000.0 (pixels³ per second²)
+- Minimum gravity distance: 10.0 pixels (prevents division by zero near center)
 - Win score: 5 points
 
 ---

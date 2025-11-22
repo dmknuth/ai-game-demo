@@ -75,15 +75,20 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 3.5 Implement spacecraft rotation mechanics (left/right arrow keys)
   - [x] 3.6 Implement spacecraft thrust mechanics (up arrow key) with velocity and acceleration
   - [x] 3.7 Implement screen wrapping for spacecraft (wrap to opposite edge when reaching boundaries)
-  - [x] 3.8 Create `src/Projectile.h` header file with Projectile class declaration
-  - [x] 3.9 Create `src/Projectile.cpp` with Projectile class implementation
-  - [x] 3.10 Implement projectile position and velocity properties
-  - [x] 3.11 Implement projectile movement along its direction vector
-  - [x] 3.12 Implement projectile edge detection (disappear when reaching screen edge)
-  - [x] 3.13 Create `src/GameState.h` header file with GameState class declaration
-  - [x] 3.14 Create `src/GameState.cpp` with GameState class implementation
-  - [x] 3.15 Implement GameState to hold both spacecraft, projectiles, and scores
-  - [x] 3.16 Implement game initialization logic (spawn both spacecraft at center, facing away from each other)
+  - [x] 3.8 Implement gravitational force system (gravitational pull toward screen center, inverse square law)
+  - [x] 3.8.1 Add gravitational force constants to Constants.h (GRAVITATIONAL_STRENGTH, MIN_GRAVITY_DISTANCE)
+  - [x] 3.8.2 Implement applyGravitationalForce() method in Spacecraft class
+  - [x] 3.8.3 Apply gravitational force to spacecraft in update loop
+  - [x] 3.8.4 Apply gravitational force to projectiles in update loop
+  - [x] 3.9 Create `src/Projectile.h` header file with Projectile class declaration
+  - [x] 3.10 Create `src/Projectile.cpp` with Projectile class implementation
+  - [x] 3.11 Implement projectile position and velocity properties
+  - [x] 3.12 Implement projectile movement along its direction vector
+  - [x] 3.13 Implement projectile edge detection (disappear when reaching screen edge)
+  - [x] 3.14 Create `src/GameState.h` header file with GameState class declaration
+  - [x] 3.15 Create `src/GameState.cpp` with GameState class implementation
+  - [x] 3.16 Implement GameState to hold both spacecraft, projectiles, and scores
+  - [x] 3.17 Implement game initialization logic (spawn Player 1 near left edge ~100px, Player 2 near right edge ~100px, both facing toward each other)
 
 - [x] 4.0 Network communication layer
   - [x] 4.1 Create `src/NetworkManager.h` header file with NetworkManager class declaration
@@ -140,13 +145,14 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 6.8 Implement hit detection logic (determine which player's projectile hit which spacecraft)
   - [x] 6.9 Implement scoring system (increment score when projectile hits opponent)
   - [x] 6.10 Implement explosion trigger when collision detected
-  - [x] 6.11 Implement respawn logic (destroyed spacecraft reappears at random location with neutral orientation)
+  - [x] 6.11 Implement respawn logic (destroyed spacecraft reappears at random location with neutral orientation, avoiding initial spawn position and destruction location)
   - [x] 6.12 Implement win condition check (game ends when either player reaches score of 5)
   - [x] 6.13 Implement game state management (playing, paused on disconnect, game over)
   - [x] 6.14 Implement pause logic when network disconnection is detected
   - [x] 6.15 Implement resume logic when network reconnection is successful
-  - [x] 6.16 Ensure only one projectile per player exists at a time (new projectile replaces old one if still active)
-  - [x] 6.17 Test complete gameplay flow (connect, play, score, win condition)
+  - [x] 6.16 Implement multiple projectiles support (players can fire multiple projectiles simultaneously by rapidly pressing spacebar)
+  - [x] 6.17 Update collision detection to remove only the specific projectile that hit (not all projectiles from that player)
+  - [x] 6.18 Test complete gameplay flow (connect, play, score, win condition)
 
 ## Implementation Notes
 
@@ -168,6 +174,28 @@ Update the file after completing each sub-task, not just after completing an ent
 4. **Network Architecture:**
    - Implemented bidirectional PUSH/PULL ZeroMQ sockets for peer-to-peer communication
    - Each player binds locally and connects to peer for sending/receiving
+
+5. **Multiple Projectiles:**
+   - Removed limitation of one projectile per player
+   - Players can now fire multiple projectiles simultaneously by rapidly pressing spacebar
+   - Each projectile is tracked independently and synchronized across the network
+   - Collision detection now removes only the specific projectile that hit, not all projectiles from that player
+
+6. **Gravitational Force:**
+   - Implemented gravitational force at screen center that pulls all objects toward center
+   - Uses inverse square law for realistic physics (force decreases with distance: F = G / r²)
+   - Affects both spacecraft and projectiles, adding strategic depth to gameplay
+   - Gravitational constants: GRAVITATIONAL_STRENGTH = 50000.0, MIN_GRAVITY_DISTANCE = 10.0
+
+7. **Initial Spawn Positions:**
+   - Changed from center spawn to edge spawn positions
+   - Player 1 spawns near left edge (100 pixels from left), Player 2 near right edge (100 pixels from right)
+   - Both face toward each other at game start
+
+8. **Improved Respawn Logic:**
+   - Respawn positions are now random and avoid both initial spawn position and destruction location
+   - Ensures variety in respawn locations and prevents immediate re-engagement at same position
+   - Minimum distance of 150 pixels from avoided positions
 
 ### Known Limitations
 
