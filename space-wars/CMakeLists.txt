@@ -32,15 +32,18 @@ set(SOURCES
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Find SFML (try 3.0 first, then fall back to 2.5)
-# SFML 3.0 uses Graphics component which includes Window
-find_package(SFML 3.0 COMPONENTS Graphics QUIET)
-if(SFML_FOUND AND SFML_VERSION_MAJOR VERSION_GREATER_EQUAL 3)
-    set(SFML_3_FOUND TRUE)
-else()
-    find_package(SFML 2.5 COMPONENTS system window graphics REQUIRED)
-    set(SFML_3_FOUND FALSE)
-endif()
+include(FetchContent)
+
+# SFML
+FetchContent_Declare(
+    SFML
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG 3.0.1
+    GIT_SHALLOW ON
+    EXCLUDE_FROM_ALL
+    SYSTEM
+)
+FetchContent_MakeAvailable(SFML)
 
 # Find ZeroMQ using pkg-config
 find_package(PkgConfig REQUIRED)
@@ -49,22 +52,11 @@ pkg_check_modules(ZMQ REQUIRED libzmq)
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Link SFML libraries (handle both 2.5 and 3.0)
-if(SFML_3_FOUND)
-    # SFML 3.0 - Graphics component includes Window and System dependencies
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        SFML::Graphics
-    )
-else()
-    # SFML 2.5
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        SFML::System
-        SFML::Window
-        SFML::Graphics
-    )
-endif()
+# SFML 3.0 - Graphics component includes Window and System dependencies
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+    SFML::Graphics
+)
 
 # Link ZeroMQ libraries
 target_include_directories(${PROJECT_NAME} PRIVATE ${ZMQ_INCLUDE_DIRS})
