@@ -7,11 +7,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//----------------------------------------------------------------------------------------
 Renderer::Renderer()
     : m_fontLoaded(false)
     , m_explosionRadius(0.0f)
     , m_explosionTime(0.0f)
-    , m_explosionActive(false) {
+    , m_explosionActive(false) 
+{
     // Try to load a default font (SFML 3.0 may have built-in font support)
     // For now, we'll use SFML's default rendering which should work
     m_fontLoaded = false;  // We'll use SFML's default text rendering
@@ -54,8 +56,10 @@ Renderer::Renderer()
 */
 }
 
+//----------------------------------------------------------------------------------------
 void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
-                      bool connectionLost, int /*localPlayerId*/) {
+                      bool connectionLost, int /*localPlayerId*/) 
+{
     // Update explosion animation (will be called with deltaTime from Game class)
     // Note: deltaTime should be passed, but for now we'll update in render
     // This will be fixed when integrated with Game class
@@ -86,7 +90,9 @@ void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
     }
 }
 
-void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacecraft) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacecraft) 
+{
     int playerId = spacecraft.getPlayerId();
     sf::Vector2f position = spacecraft.getPosition();
     float orientation = spacecraft.getOrientation();
@@ -104,7 +110,9 @@ void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacec
     }
 }
 
-void Renderer::drawSpacecraftShape1(sf::RenderWindow& window, sf::Vector2f position, float orientation) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawSpacecraftShape1(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
+{
     // Triangle shape (pointing forward)
     // 0 degrees = pointing right (positive X direction)
     float size = 15.0f;
@@ -123,7 +131,9 @@ void Renderer::drawSpacecraftShape1(sf::RenderWindow& window, sf::Vector2f posit
     drawLine(window, backLeft, backRight, sf::Color::White);
 }
 
-void Renderer::drawSpacecraftShape2(sf::RenderWindow& window, sf::Vector2f position, float orientation) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawSpacecraftShape2(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
+{
     // Diamond/rhombus shape (pointing forward)
     // 0 degrees = pointing right (positive X direction)
     float size = 15.0f;
@@ -145,7 +155,9 @@ void Renderer::drawSpacecraftShape2(sf::RenderWindow& window, sf::Vector2f posit
     drawLine(window, left, front, sf::Color::Cyan);
 }
 
-void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& spacecraft) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& spacecraft) 
+{
     sf::Vector2f position = spacecraft.getPosition();
     float orientation = spacecraft.getOrientation();
     
@@ -173,7 +185,9 @@ void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& space
     }
 }
 
-void Renderer::drawProjectile(sf::RenderWindow& window, const Projectile& projectile) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawProjectile(sf::RenderWindow& window, const Projectile& projectile) 
+{
     sf::Vector2f position = projectile.getPosition();
     
     // Draw as a small circle/dot
@@ -184,7 +198,9 @@ void Renderer::drawProjectile(sf::RenderWindow& window, const Projectile& projec
     window.draw(dot);
 }
 
-void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position, float radius) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position, float radius) 
+{
     // Draw explosion as expanding circles
     int numCircles = 3;
     for (int i = 0; i < numCircles; i++) {
@@ -212,7 +228,9 @@ void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position, fl
     }
 }
 
-void Renderer::drawScore(sf::RenderWindow& window, int score1, int score2) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawScore(sf::RenderWindow& window, int score1, int score2) 
+{
     // Draw scores in top corners
     std::string score1Text = "Player 1: " + std::to_string(score1);
     std::string score2Text = "Player 2: " + std::to_string(score2);
@@ -239,7 +257,9 @@ void Renderer::drawScore(sf::RenderWindow& window, int score1, int score2) {
     }
 }
 
-void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bool connectionLost) 
+{
     if (!m_fontLoaded) {
         // Skip if no font loaded
         return;
@@ -267,7 +287,9 @@ void Renderer::drawConnectionStatus(sf::RenderWindow& window, bool connected, bo
     window.draw(text);
 }
 
-void Renderer::drawGameOver(sf::RenderWindow& window, int winner) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawGameOver(sf::RenderWindow& window, int winner) 
+{
     if (!m_fontLoaded) {
         // Skip if no font loaded
         return;
@@ -298,7 +320,9 @@ void Renderer::drawGameOver(sf::RenderWindow& window, int winner) {
     window.draw(text);
 }
 
-sf::Vector2f Renderer::rotatePoint(sf::Vector2f point, sf::Vector2f center, float angleDegrees) {
+//----------------------------------------------------------------------------------------
+sf::Vector2f Renderer::rotatePoint(sf::Vector2f point, sf::Vector2f center, float angleDegrees) 
+{
     float angleRad = angleDegrees * M_PI / 180.0f;
     float cosA = std::cos(angleRad);
     float sinA = std::sin(angleRad);
@@ -314,7 +338,9 @@ sf::Vector2f Renderer::rotatePoint(sf::Vector2f point, sf::Vector2f center, floa
     return sf::Vector2f(newX, newY) + center;
 }
 
-void Renderer::drawLine(sf::RenderWindow& window, sf::Vector2f p1, sf::Vector2f p2, sf::Color color) {
+//----------------------------------------------------------------------------------------
+void Renderer::drawLine(sf::RenderWindow& window, sf::Vector2f p1, sf::Vector2f p2, sf::Color color) 
+{
     // Draw line using a rectangle (SFML doesn't have a direct line drawing function)
     sf::Vector2f diff = p2 - p1;
     float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
@@ -329,14 +355,18 @@ void Renderer::drawLine(sf::RenderWindow& window, sf::Vector2f p1, sf::Vector2f 
     window.draw(line);
 }
 
-void Renderer::triggerExplosion(sf::Vector2f position) {
+//----------------------------------------------------------------------------------------
+void Renderer::triggerExplosion(sf::Vector2f position) 
+{
     m_explosionPosition = position;
     m_explosionRadius = 0.0f;
     m_explosionTime = 0.0f;
     m_explosionActive = true;
 }
 
-void Renderer::updateExplosion(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Renderer::updateExplosion(float deltaTime) 
+{
     if (m_explosionActive) {
         m_explosionTime += deltaTime;
         m_explosionRadius = (m_explosionTime / 0.5f) * 30.0f;  // 0.5s duration, 30px max radius

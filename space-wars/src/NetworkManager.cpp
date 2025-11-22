@@ -3,10 +3,12 @@
 #include <iostream>
 #include <chrono>
 
+//----------------------------------------------------------------------------------------
 NetworkManager::NetworkManager()
     : m_connected(false)
     , m_connectionLost(false)
-    , m_localPort(0) {
+    , m_localPort(0) 
+{
     try {
         m_context = std::make_unique<zmq::context_t>(1);
     } catch (const std::exception& e) {
@@ -14,19 +16,27 @@ NetworkManager::NetworkManager()
     }
 }
 
-NetworkManager::~NetworkManager() {
+//----------------------------------------------------------------------------------------
+NetworkManager::~NetworkManager() 
+{
     disconnect();
 }
 
-std::string NetworkManager::createAddress(const std::string& ip, int port) {
+//----------------------------------------------------------------------------------------
+std::string NetworkManager::createAddress(const std::string& ip, int port) 
+{
     return "tcp://" + ip + ":" + std::to_string(port);
 }
 
-std::string NetworkManager::createLocalAddress(int port) {
+//----------------------------------------------------------------------------------------
+std::string NetworkManager::createLocalAddress(int port) 
+{
     return "tcp://*:" + std::to_string(port);
 }
 
-bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localPort) {
+//----------------------------------------------------------------------------------------
+bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localPort) 
+{
     try {
         disconnect();
         
@@ -41,7 +51,7 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
         m_sendSocket->connect(sendAddress);
         
         // Set socket options for non-blocking receive
-        int timeout = 100;  // 100ms timeout
+        int timeout = 10000;  // 10000ms timeout
         m_receiveSocket->set(zmq::sockopt::rcvtimeo, timeout);
         
         m_connected = true;
@@ -57,14 +67,18 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
     }
 }
 
-void NetworkManager::disconnect() {
+//----------------------------------------------------------------------------------------
+void NetworkManager::disconnect() 
+{
     m_sendSocket.reset();
     m_receiveSocket.reset();
     m_connected = false;
     m_peerAddress.clear();
 }
 
-std::string NetworkManager::serializeGameState(const GameState& gameState) {
+//----------------------------------------------------------------------------------------
+std::string NetworkManager::serializeGameState(const GameState& gameState) 
+{
     std::ostringstream oss;
     
     // Serialize spacecraft 1
@@ -103,11 +117,14 @@ std::string NetworkManager::serializeGameState(const GameState& gameState) {
     return oss.str();
 }
 
-bool NetworkManager::deserializeGameState(const std::string& data, GameState& gameState) {
+//----------------------------------------------------------------------------------------
+bool NetworkManager::deserializeGameState(const std::string& data, GameState& gameState) 
+{
     try {
         std::istringstream iss(data);
         std::string token;
         
+        std::cout << "data: " << data << std::endl;
         // Parse spacecraft 1
         if (std::getline(iss, token, ';') && token.substr(0, 4) == "SC1:") {
             std::string scData = token.substr(4);
@@ -203,7 +220,9 @@ bool NetworkManager::deserializeGameState(const std::string& data, GameState& ga
     }
 }
 
-bool NetworkManager::sendGameState(const GameState& gameState) {
+//----------------------------------------------------------------------------------------
+bool NetworkManager::sendGameState(const GameState& gameState) 
+{
     if (!m_connected || !m_sendSocket) {
         return false;
     }
@@ -226,7 +245,9 @@ bool NetworkManager::sendGameState(const GameState& gameState) {
     }
 }
 
-bool NetworkManager::receiveGameState(GameState& gameState) {
+//----------------------------------------------------------------------------------------
+bool NetworkManager::receiveGameState(GameState& gameState) 
+{
     if (!m_connected || !m_receiveSocket) {
         return false;
     }
@@ -255,7 +276,9 @@ bool NetworkManager::receiveGameState(GameState& gameState) {
     }
 }
 
-bool NetworkManager::checkConnection() {
+//----------------------------------------------------------------------------------------
+bool NetworkManager::checkConnection() 
+{
     if (!m_connected) {
         return false;
     }

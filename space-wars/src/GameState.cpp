@@ -2,14 +2,18 @@
 #include "Constants.h"
 #include <algorithm>
 
+//----------------------------------------------------------------------------------------
 GameState::GameState()
     : m_score1(0)
     , m_score2(0)
-    , m_gameOver(false) {
+    , m_gameOver(false) 
+{
     initializeSpacecraft();
 }
 
-void GameState::initializeSpacecraft() {
+//----------------------------------------------------------------------------------------
+void GameState::initializeSpacecraft() 
+{
     // Spawn both spacecraft at center of screen
     sf::Vector2f center1(
         Constants::WINDOW_WIDTH / 2.0f - 40,
@@ -26,7 +30,9 @@ void GameState::initializeSpacecraft() {
     m_spacecraft2 = Spacecraft(center2, 0.0f, 2);
 }
 
-Spacecraft& GameState::getSpacecraft(int playerId) {
+//----------------------------------------------------------------------------------------
+Spacecraft& GameState::getSpacecraft(int playerId) 
+{
     if (playerId == 1) {
         return m_spacecraft1;
     } else {
@@ -34,7 +40,9 @@ Spacecraft& GameState::getSpacecraft(int playerId) {
     }
 }
 
-const Spacecraft& GameState::getSpacecraft(int playerId) const {
+//----------------------------------------------------------------------------------------
+const Spacecraft& GameState::getSpacecraft(int playerId) const 
+{
     if (playerId == 1) {
         return m_spacecraft1;
     } else {
@@ -42,17 +50,23 @@ const Spacecraft& GameState::getSpacecraft(int playerId) const {
     }
 }
 
-void GameState::addProjectile(const Projectile& projectile) {
+//----------------------------------------------------------------------------------------
+void GameState::addProjectile(const Projectile& projectile) 
+{
     m_projectiles.push_back(projectile);
 }
 
-void GameState::updateProjectiles(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void GameState::updateProjectiles(float deltaTime) 
+{
     for (auto& projectile : m_projectiles) {
         projectile.update(deltaTime);
     }
 }
 
-void GameState::removeInactiveProjectiles() {
+//----------------------------------------------------------------------------------------
+void GameState::removeInactiveProjectiles() 
+{
     m_projectiles.erase(
         std::remove_if(
             m_projectiles.begin(),
@@ -63,7 +77,9 @@ void GameState::removeInactiveProjectiles() {
     );
 }
 
-int GameState::getScore(int playerId) const {
+//----------------------------------------------------------------------------------------
+int GameState::getScore(int playerId) const 
+{
     if (playerId == 1) {
         return m_score1;
     } else {
@@ -71,7 +87,9 @@ int GameState::getScore(int playerId) const {
     }
 }
 
-void GameState::setScore(int playerId, int score) {
+//----------------------------------------------------------------------------------------
+void GameState::setScore(int playerId, int score) 
+{
     if (playerId == 1) {
         m_score1 = score;
     } else {
@@ -84,7 +102,9 @@ void GameState::setScore(int playerId, int score) {
     }
 }
 
-void GameState::incrementScore(int playerId) {
+//----------------------------------------------------------------------------------------
+void GameState::incrementScore(int playerId) 
+{
     if (playerId == 1) {
         m_score1++;
     } else {
@@ -97,16 +117,22 @@ void GameState::incrementScore(int playerId) {
     }
 }
 
-void GameState::resetScores() {
+//----------------------------------------------------------------------------------------
+void GameState::resetScores() 
+{
     m_score1 = 0;
     m_score2 = 0;
 }
 
-bool GameState::hasWinner() const {
+//----------------------------------------------------------------------------------------
+bool GameState::hasWinner() const 
+{
     return (m_score1 >= Constants::WIN_SCORE || m_score2 >= Constants::WIN_SCORE);
 }
 
-int GameState::getWinner() const {
+//----------------------------------------------------------------------------------------
+int GameState::getWinner() const 
+{
     if (m_score1 >= Constants::WIN_SCORE) {
         return 1;
     } else if (m_score2 >= Constants::WIN_SCORE) {
@@ -116,7 +142,9 @@ int GameState::getWinner() const {
     }
 }
 
-void GameState::reset() {
+//----------------------------------------------------------------------------------------
+void GameState::reset() 
+{
     resetScores();
     m_gameOver = false;
     m_projectiles.clear();

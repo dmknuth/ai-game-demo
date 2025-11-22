@@ -5,23 +5,29 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//----------------------------------------------------------------------------------------
 Spacecraft::Spacecraft() 
     : m_position(0.0f, 0.0f)
     , m_orientation(0.0f)
     , m_velocity(0.0f, 0.0f)
     , m_playerId(1)
-    , m_isThrusting(false) {
+    , m_isThrusting(false) 
+{
 }
 
+//----------------------------------------------------------------------------------------
 Spacecraft::Spacecraft(sf::Vector2f position, float orientation, int playerId)
     : m_position(position)
     , m_orientation(orientation)
     , m_velocity(0.0f, 0.0f)
     , m_playerId(playerId)
-    , m_isThrusting(false) {
+    , m_isThrusting(false) 
+{
 }
 
-void Spacecraft::update(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::update(float deltaTime)
+{
     // Apply friction
     applyFriction(deltaTime);
     
@@ -34,7 +40,9 @@ void Spacecraft::update(float deltaTime) {
     // Note: m_isThrusting is managed by InputHandler, don't reset it here
 }
 
-void Spacecraft::rotateLeft(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::rotateLeft(float deltaTime)
+{
     m_orientation -= Constants::SPACECRAFT_ROTATION_SPEED * deltaTime;
     // Normalize to 0-360 range
     while (m_orientation < 0.0f) {
@@ -42,7 +50,9 @@ void Spacecraft::rotateLeft(float deltaTime) {
     }
 }
 
-void Spacecraft::rotateRight(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::rotateRight(float deltaTime) 
+{
     m_orientation += Constants::SPACECRAFT_ROTATION_SPEED * deltaTime;
     // Normalize to 0-360 range
     while (m_orientation >= 360.0f) {
@@ -50,7 +60,9 @@ void Spacecraft::rotateRight(float deltaTime) {
     }
 }
 
-void Spacecraft::applyThrust(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::applyThrust(float deltaTime) 
+{
     m_isThrusting = true;
     
     // Convert orientation from degrees to radians
@@ -72,7 +84,9 @@ void Spacecraft::applyThrust(float deltaTime) {
     }
 }
 
-void Spacecraft::applyFriction(float /*deltaTime*/) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::applyFriction(float /*deltaTime*/) 
+{
     // Apply friction to gradually slow down
     m_velocity *= Constants::SPACECRAFT_FRICTION;
     
@@ -81,7 +95,9 @@ void Spacecraft::applyFriction(float /*deltaTime*/) {
     if (std::abs(m_velocity.y) < 0.1f) m_velocity.y = 0.0f;
 }
 
-void Spacecraft::wrapAroundScreen() {
+//----------------------------------------------------------------------------------------
+void Spacecraft::wrapAroundScreen() 
+{
     // Wrap around horizontal edges
     if (m_position.x < 0.0f) {
         m_position.x = Constants::WINDOW_WIDTH;
@@ -97,7 +113,9 @@ void Spacecraft::wrapAroundScreen() {
     }
 }
 
-void Spacecraft::reset(sf::Vector2f position, float orientation) {
+//----------------------------------------------------------------------------------------
+void Spacecraft::reset(sf::Vector2f position, float orientation) 
+{
     m_position = position;
     m_orientation = orientation;
     m_velocity = sf::Vector2f(0.0f, 0.0f);

@@ -11,11 +11,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//----------------------------------------------------------------------------------------
 Game::Game() 
     : m_isRunning(true)
     , m_isPaused(false)
     , m_localPlayerId(1)  // Default to player 1, could be made configurable
-    , m_networkUpdateTimer(0.0f) {
+    , m_networkUpdateTimer(0.0f) 
+{
     // Initialize SFML window (1024x768, windowed mode)
     m_window.create(sf::VideoMode(sf::Vector2u(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT)), "Space Wars");
     m_window.setFramerateLimit(static_cast<unsigned int>(TARGET_FPS));
@@ -30,11 +32,15 @@ Game::Game()
     initializeNetwork();
 }
 
-Game::~Game() {
+//----------------------------------------------------------------------------------------
+Game::~Game() 
+{
     m_networkManager.disconnect();
 }
 
-void Game::run() {
+//----------------------------------------------------------------------------------------
+void Game::run() 
+{
     while (m_isRunning && m_window.isOpen()) {
         auto currentTime = std::chrono::high_resolution_clock::now();
         auto deltaTime = std::chrono::duration<float>(currentTime - m_lastFrameTime).count();
@@ -50,7 +56,9 @@ void Game::run() {
     }
 }
 
-void Game::processInput() {
+//----------------------------------------------------------------------------------------
+void Game::processInput() 
+{
     // Handle window events and pass keyboard events to InputHandler
     while (std::optional<sf::Event> event = m_window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
@@ -70,7 +78,9 @@ void Game::processInput() {
     }
 }
 
-void Game::update(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Game::update(float deltaTime) 
+{
     // Update game state
     m_gameState.updateProjectiles(deltaTime);
     m_gameState.removeInactiveProjectiles();
@@ -111,7 +121,9 @@ void Game::update(float deltaTime) {
     }
 }
 
-void Game::render() {
+//----------------------------------------------------------------------------------------
+void Game::render() 
+{
     m_window.clear(sf::Color::Black);
     
     // Render game state
@@ -121,6 +133,7 @@ void Game::render() {
     m_window.display();
 }
 
+//----------------------------------------------------------------------------------------
 void Game::checkCollisions() {
     const auto& projectiles = m_gameState.getProjectiles();
     
@@ -162,6 +175,7 @@ void Game::checkCollisions() {
     }
 }
 
+//----------------------------------------------------------------------------------------
 void Game::handleHit(int projectileOwnerId, int hitSpacecraftId) {
     // Remove the projectile
     auto& projectiles = m_gameState.getProjectiles();
@@ -190,6 +204,7 @@ void Game::handleHit(int projectileOwnerId, int hitSpacecraftId) {
               << "! Score: " << m_gameState.getScore(projectileOwnerId) << std::endl;
 }
 
+//----------------------------------------------------------------------------------------
 void Game::respawnSpacecraft(int playerId) {
     Spacecraft& spacecraft = m_gameState.getSpacecraft(playerId);
     
@@ -219,6 +234,7 @@ void Game::respawnSpacecraft(int playerId) {
     spacecraft.reset(sf::Vector2f(x, y), orientation);
 }
 
+//----------------------------------------------------------------------------------------
 void Game::checkWinCondition() {
     if (m_gameState.hasWinner()) {
         int winner = m_gameState.getWinner();
@@ -227,6 +243,7 @@ void Game::checkWinCondition() {
     }
 }
 
+//----------------------------------------------------------------------------------------
 void Game::syncNetworkState() {
     if (!m_networkManager.isConnected()) {
         return;
@@ -266,6 +283,7 @@ void Game::syncNetworkState() {
     }
 }
 
+//----------------------------------------------------------------------------------------
 void Game::initializeNetwork() {
     std::cout << "\n=== Space Wars Network Setup ===" << std::endl;
     std::cout << "Enter connection type:" << std::endl;

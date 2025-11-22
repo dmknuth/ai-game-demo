@@ -10,15 +10,19 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//----------------------------------------------------------------------------------------
 InputHandler::InputHandler()
     : m_leftPressed(false)
     , m_rightPressed(false)
     , m_upPressed(false)
     , m_spacePressed(false)
-    , m_spaceWasPressed(false) {
+    , m_spaceWasPressed(false) 
+{
 }
 
-void InputHandler::handleEvent(const sf::Event& event) {
+//----------------------------------------------------------------------------------------
+void InputHandler::handleEvent(const sf::Event& event) 
+{
     // Handle keyboard events - SFML 3.0 uses variant-based events
     if (auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         if (keyPressed->code == sf::Keyboard::Key::Left) {
@@ -46,7 +50,9 @@ void InputHandler::handleEvent(const sf::Event& event) {
     }
 }
 
-void InputHandler::processInput(GameState& gameState, int localPlayerId, float deltaTime) {
+//----------------------------------------------------------------------------------------
+void InputHandler::processInput(GameState& gameState, int localPlayerId, float deltaTime) 
+{
     // Get local player's spacecraft
     Spacecraft& spacecraft = gameState.getSpacecraft(localPlayerId);
     
@@ -60,7 +66,9 @@ void InputHandler::processInput(GameState& gameState, int localPlayerId, float d
     }
 }
 
-void InputHandler::handleSpacecraftInput(Spacecraft& spacecraft, float deltaTime) {
+//----------------------------------------------------------------------------------------
+void InputHandler::handleSpacecraftInput(Spacecraft& spacecraft, float deltaTime) 
+{
     // Rotate left
     if (m_leftPressed) {
         spacecraft.rotateLeft(deltaTime);
@@ -83,7 +91,9 @@ void InputHandler::handleSpacecraftInput(Spacecraft& spacecraft, float deltaTime
     spacecraft.update(deltaTime);
 }
 
-void InputHandler::handleFiring(GameState& gameState, int localPlayerId) {
+//----------------------------------------------------------------------------------------
+void InputHandler::handleFiring(GameState& gameState, int localPlayerId) 
+{
     const Spacecraft& spacecraft = gameState.getSpacecraft(localPlayerId);
     
     // Remove existing projectile for this player (only one projectile per player)
@@ -115,7 +125,9 @@ void InputHandler::handleFiring(GameState& gameState, int localPlayerId) {
     gameState.addProjectile(projectile);
 }
 
-void InputHandler::reset() {
+//----------------------------------------------------------------------------------------
+void InputHandler::reset() 
+{
     m_leftPressed = false;
     m_rightPressed = false;
     m_upPressed = false;

@@ -1,17 +1,21 @@
 #include "Projectile.h"
 #include <cmath>
 
+//----------------------------------------------------------------------------------------
 Projectile::Projectile()
     : m_position(0.0f, 0.0f)
     , m_velocity(0.0f, 0.0f)
     , m_ownerPlayerId(1)
-    , m_active(false) {
+    , m_active(false) 
+{
 }
 
+//----------------------------------------------------------------------------------------
 Projectile::Projectile(sf::Vector2f position, sf::Vector2f direction, int ownerPlayerId)
     : m_position(position)
     , m_ownerPlayerId(ownerPlayerId)
-    , m_active(true) {
+    , m_active(true) 
+{
     // Normalize direction and multiply by projectile speed
     float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
     if (length > 0.0f) {
@@ -22,7 +26,9 @@ Projectile::Projectile(sf::Vector2f position, sf::Vector2f direction, int ownerP
     }
 }
 
-void Projectile::update(float deltaTime) {
+//----------------------------------------------------------------------------------------
+void Projectile::update(float deltaTime) 
+{
     if (!m_active) return;
     
     // Update position based on velocity
@@ -34,7 +40,9 @@ void Projectile::update(float deltaTime) {
     }
 }
 
-bool Projectile::isOffScreen() const {
+//----------------------------------------------------------------------------------------
+bool Projectile::isOffScreen() const 
+{
     // Check if projectile has left the screen boundaries
     return (m_position.x < 0.0f || 
             m_position.x > Constants::WINDOW_WIDTH ||
