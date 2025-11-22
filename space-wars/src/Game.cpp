@@ -249,36 +249,78 @@ void Game::handleHit(const Projectile& projectile, int hitSpacecraftId) {
     
     // Trigger explosion at hit location
     Spacecraft& hitSpacecraft = m_gameState.getSpacecraft(hitSpacecraftId);
-    m_renderer.triggerExplosion(hitSpacecraft.getPosition());
+    sf::Vector2f destructionPos = hitSpacecraft.getPosition();
+    m_renderer.triggerExplosion(destructionPos);
     
-    // Respawn the hit spacecraft
-    respawnSpacecraft(hitSpacecraftId);
+    // Respawn the hit spacecraft at a random position
+    respawnSpacecraft(hitSpacecraftId, destructionPos);
     
     std::cout << "Player " << projectileOwnerId << " hit Player " << hitSpacecraftId 
               << "! Score: " << m_gameState.getScore(projectileOwnerId) << std::endl;
 }
 
 //----------------------------------------------------------------------------------------
-void Game::respawnSpacecraft(int playerId) {
+void Game::respawnSpacecraft(int playerId, sf::Vector2f avoidPosition) {
     Spacecraft& spacecraft = m_gameState.getSpacecraft(playerId);
     
-    // Respawn near the appropriate edge (100 pixels from edge)
-    float x, y;
-    float orientation;
+    // Initial spawn positions (to avoid respawning at these)
+    sf::Vector2f initialPos1(100.0f, Constants::WINDOW_HEIGHT / 2.0f);
+    sf::Vector2f initialPos2(Constants::WINDOW_WIDTH - 100.0f, Constants::WINDOW_HEIGHT / 2.0f);
+    sf::Vector2f initialPos = (playerId == 1) ? initialPos1 : initialPos2;
     
-    if (playerId == 1) {
-        // Player 1 spawns near left edge
-        x = 100.0f;
-        y = Constants::WINDOW_HEIGHT / 2.0f;
-        orientation = 0.0f;  // Facing right
-    } else {
-        // Player 2 spawns near right edge
-        x = Constants::WINDOW_WIDTH - 100.0f;
-        y = Constants::WINDOW_HEIGHT / 2.0f;
-        orientation = 180.0f;  // Facing left
+    // Minimum distance to avoid respawning too close to avoided positions
+    constexpr float MIN_DISTANCE = 150.0f;
+    
+    // Try to find a valid random position (max attempts to avoid infinite loop)
+    float x, y;
+    int attempts = 0;
+    constexpr int MAX_ATTEMPTS = 100;
+    
+    do {
+        // Generate random position within screen bounds
+        // Leave some margin from edges (50 pixels)
+        x = 50.0f + static_cast<float>(std::rand() % (Constants::WINDOW_WIDTH - 100));
+        y = 50.0f + static_cast<float>(std::rand() % (Constants::WINDOW_HEIGHT - 100));
+        
+        attempts++;
+        
+        // Check distance from initial spawn position
+        float distToInitial = std::sqrt(
+            (x - initialPos.x) * (x - initialPos.x) +
+            (y - initialPos.y) * (y - initialPos.y)
+        );
+        
+        // Check distance from destruction position
+        float distToDestruction = std::sqrt(
+            (x - avoidPosition.x) * (x - avoidPosition.x) +
+            (y - avoidPosition.y) * (y - avoidPosition.y)
+        );
+        
+        // If position is far enough from both, use it
+        if (distToInitial >= MIN_DISTANCE && distToDestruction >= MIN_DISTANCE) {
+            break;
+        }
+        
+    } while (attempts < MAX_ATTEMPTS);
+    
+    // If we couldn't find a good position after max attempts, use a fallback
+    // Position on the opposite side from initial spawn
+    if (attempts >= MAX_ATTEMPTS) {
+        if (playerId == 1) {
+            // Player 1: try right side
+            x = Constants::WINDOW_WIDTH - 150.0f;
+            y = Constants::WINDOW_HEIGHT / 2.0f;
+        } else {
+            // Player 2: try left side
+            x = 150.0f;
+            y = Constants::WINDOW_HEIGHT / 2.0f;
+        }
     }
     
-    // Reset spacecraft at edge position
+    // Random orientation
+    float orientation = static_cast<float>(std::rand() % 360);
+    
+    // Reset spacecraft at random position
     spacecraft.reset(sf::Vector2f(x, y), orientation);
 }
 

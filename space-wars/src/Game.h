@@ -26,7 +26,7 @@ private:
     // Game logic
     void checkCollisions();
     void handleHit(const Projectile& projectile, int hitSpacecraftId);
-    void respawnSpacecraft(int playerId);
+    void respawnSpacecraft(int playerId, sf::Vector2f avoidPosition);
     void checkWinCondition();
     
     // Network
