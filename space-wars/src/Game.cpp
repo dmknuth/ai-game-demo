@@ -18,7 +18,8 @@ Game::Game()
     : m_isRunning(true)
     , m_isPaused(false)
     , m_localPlayerId(1)  // Default to player 1, could be made configurable
-    , m_networkUpdateTimer(0.0f) 
+    , m_networkUpdateTimer(0.0f)
+    , m_reconnectTimer(0.0f)
 {
     // Initialize SFML window (1024x768, windowed mode)
     m_window.create(sf::VideoMode(sf::Vector2u(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT)), "Space Wars");
@@ -107,18 +108,39 @@ void Game::update(float deltaTime)
         m_networkUpdateTimer = 0.0f;
     }
     
-    // Check network connection
+    // Check network connection and handle reconnection
     if (m_networkManager.isConnected()) {
         if (m_networkManager.isConnectionLost()) {
-            m_isPaused = true;
-            std::cout << "Connection lost - Game paused" << std::endl;
+            // Connection was lost - pause the game
+            if (!m_isPaused) {
+                m_isPaused = true;
+                std::cout << "Connection lost - Game paused. Attempting to reconnect..." << std::endl;
+            }
+            // Disconnect to allow reconnection attempt
+            m_networkManager.disconnect();
         }
     } else {
-        // Try to reconnect if connection was lost
+        // Not connected - try to reconnect periodically
         if (m_networkManager.isConnectionLost()) {
-            // Reconnection logic would go here
-            // For now, just reset the connection status
-            m_networkManager.resetConnectionStatus();
+            m_reconnectTimer += deltaTime;
+            
+            // Attempt reconnection every RECONNECT_INTERVAL seconds
+            if (m_reconnectTimer >= RECONNECT_INTERVAL) {
+                m_reconnectTimer = 0.0f;
+                
+                std::cout << "Attempting to reconnect..." << std::endl;
+                if (m_networkManager.connect(m_networkConfig.clientIp, 
+                                             m_networkConfig.clientPort, 
+                                             m_networkConfig.hostPort)) {
+                    // Reconnection successful!
+                    m_isPaused = false;
+                    m_networkManager.resetConnectionStatus();
+                    std::cout << "Reconnected! Game resuming..." << std::endl;
+                } else {
+                    // Reconnection failed - will try again in RECONNECT_INTERVAL seconds
+                    std::cout << "Reconnection failed. Will retry in " << RECONNECT_INTERVAL << " seconds..." << std::endl;
+                }
+            }
         }
     }
 }
@@ -341,6 +363,9 @@ void Game::initializeNetwork() {
     std::cout << "Client Port: " << config.clientPort << std::endl;
     std::cout << "Connecting..." << std::endl;
     
+    // Store configuration for reconnection attempts
+    m_networkConfig = config;
+    
     // Connect using configuration
     // host_ip/host_port: where this player binds (receives)
     // client_ip/client_port: where this player connects (sends)
@@ -351,7 +376,9 @@ void Game::initializeNetwork() {
         std::cerr << "  1. Network configuration in " << configFile << std::endl;
         std::cerr << "  2. Firewall settings" << std::endl;
         std::cerr << "  3. Other player is running and ready to connect" << std::endl;
-        std::cerr << "Continuing in single-player mode." << std::endl;
+        std::cerr << "Continuing in single-player mode. Will attempt to reconnect automatically." << std::endl;
+        // Mark as connection lost so reconnection attempts will begin
+        m_networkManager.resetConnectionStatus();  // This will be set to lost on first send attempt
     }
     
     std::cout << std::endl;

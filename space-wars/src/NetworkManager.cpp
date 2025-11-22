@@ -51,7 +51,7 @@ bool NetworkManager::connect(const std::string& peerIp, int peerPort, int localP
         m_sendSocket->connect(sendAddress);
         
         // Set socket options for non-blocking receive
-        int timeout = 10000;  // 10000ms timeout
+        int timeout = 100;  // 100ms timeout
         m_receiveSocket->set(zmq::sockopt::rcvtimeo, timeout);
         
         m_connected = true;
