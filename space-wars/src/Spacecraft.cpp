@@ -112,7 +112,8 @@ void Spacecraft::applyGravitationalForce(float deltaTime)
     
     // Calculate gravitational acceleration (inverse square law: F = G / r^2)
     // The further from center, the weaker the pull
-    float acceleration = Constants::GRAVITATIONAL_STRENGTH / (distance * distance);
+//    float acceleration = Constants::GRAVITATIONAL_STRENGTH / (distance * distance);
+    float acceleration = Constants::GRAVITATIONAL_STRENGTH / (distance);
     
     // Apply gravitational acceleration to velocity
     m_velocity += direction * acceleration * deltaTime;

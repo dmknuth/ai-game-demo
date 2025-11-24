@@ -2,7 +2,8 @@
 #include <iostream>
 #include <exception>
 
-int main() {
+int main() 
+{
     try {
         Game game;
         game.run();

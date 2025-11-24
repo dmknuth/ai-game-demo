@@ -2,10 +2,15 @@
 #define RENDERER_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
 #include "Spacecraft.h"
 #include "Projectile.h"
 #include "GameState.h"
+#include "Craft.hpp"
+#include "Thrust.hpp"
 #include <vector>
+#include <memory>
 
 class Renderer {
 public:
@@ -44,14 +49,18 @@ private:
     void drawLine(sf::RenderWindow& window, sf::Vector2f p1, sf::Vector2f p2, sf::Color color = sf::Color::White);
     
     // Font for text rendering
-    sf::Font m_font;
-    bool m_fontLoaded;
+    sf::Font                m_font;
+    bool                    m_fontLoaded;
     
     // Explosion animation state (could be expanded for multiple explosions)
-    float m_explosionRadius;
-    float m_explosionTime;
-    bool m_explosionActive;
-    sf::Vector2f m_explosionPosition;
+    float                   m_explosionRadius;
+    float                   m_explosionTime;
+    bool                    m_explosionActive;
+    sf::Vector2f            m_explosionPosition;
+    std::shared_ptr<Craft>  m_player_1;
+    std::shared_ptr<Craft>  m_player_2;
+    std::shared_ptr<Thrust> m_thrust_1;
+    sf::Clock               m_clock;
 };
 
 #endif // RENDERER_H
