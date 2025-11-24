@@ -40,20 +40,10 @@ Renderer::Renderer()
             break;
         }
     }
-/*
-    sf::Text statusText(m_font);
-    if (m_fontLoaded) {
-        std::string message("Game Arena");
-        statusText.setString(message.c_str());
-        statusText.setCharacterSize(12);
-        statusText.setFillColor(sf::Color::Black);
-        statusText.setPosition({10.f, 10.f});
-        window.draw(statusText);
-    } else {
-        statusText.setString("No font found");
-        statusText.setFillColor(sf::Color::Red);
-    }
-*/
+
+    m_player_1 = std::make_shared<Craft>(Constants::CRAFT_1);
+    m_player_2 = std::make_shared<Craft>(Constants::CRAFT_2);
+    m_thrust_1 = std::make_shared<Thrust>(1000, Constants::CRAFT_1);
 }
 
 //----------------------------------------------------------------------------------------
@@ -109,51 +99,24 @@ void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacec
     if (spacecraft.isThrusting()) {
         drawThrustFlame(window, spacecraft);
     }
+    else
+        m_thrust_1 -> coast();
 }
 
 //----------------------------------------------------------------------------------------
 void Renderer::drawSpacecraftShape1(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
 {
-    // Triangle shape (pointing forward)
-    // 0 degrees = pointing right (positive X direction)
-    float size = 15.0f;
-    sf::Vector2f front(size, 0);           // Front point (pointing right when orientation = 0)
-    sf::Vector2f backLeft(-size/2, -size/2);   // Back left
-    sf::Vector2f backRight(-size/2, size/2);   // Back right
-    
-    // Rotate points around origin, then translate to position
-    front = rotatePoint(front, sf::Vector2f(0, 0), orientation) + position;
-    backLeft = rotatePoint(backLeft, sf::Vector2f(0, 0), orientation) + position;
-    backRight = rotatePoint(backRight, sf::Vector2f(0, 0), orientation) + position;
-    
-    // Draw triangle outline
-    drawLine(window, front, backLeft, sf::Color::White);
-    drawLine(window, front, backRight, sf::Color::White);
-    drawLine(window, backLeft, backRight, sf::Color::White);
+    m_player_1 -> set_pose(position, sf::degrees(orientation));
+    m_player_1 -> update();
+    window.draw(*m_player_1);
 }
 
 //----------------------------------------------------------------------------------------
 void Renderer::drawSpacecraftShape2(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
 {
-    // Diamond/rhombus shape (pointing forward)
-    // 0 degrees = pointing right (positive X direction)
-    float size = 15.0f;
-    sf::Vector2f front(size, 0);           // Front point (pointing right when orientation = 0)
-    sf::Vector2f right(0, -size/2);        // Right point
-    sf::Vector2f back(-size/2, 0);         // Back point
-    sf::Vector2f left(0, size/2);          // Left point
-    
-    // Rotate points around origin, then translate to position
-    front = rotatePoint(front, sf::Vector2f(0, 0), orientation) + position;
-    right = rotatePoint(right, sf::Vector2f(0, 0), orientation) + position;
-    back = rotatePoint(back, sf::Vector2f(0, 0), orientation) + position;
-    left = rotatePoint(left, sf::Vector2f(0, 0), orientation) + position;
-    
-    // Draw diamond outline
-    drawLine(window, front, right, sf::Color::Cyan);
-    drawLine(window, right, back, sf::Color::Cyan);
-    drawLine(window, back, left, sf::Color::Cyan);
-    drawLine(window, left, front, sf::Color::Cyan);
+    m_player_2 -> set_pose(position, sf::degrees(orientation));
+    m_player_2 -> update();
+    window.draw(*m_player_2);
 }
 
 //----------------------------------------------------------------------------------------
@@ -162,7 +125,7 @@ void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& space
     sf::Vector2f position = spacecraft.getPosition();
     float orientation = spacecraft.getOrientation();
     
-    // Calculate rear position (behind the spacecraft)
+/*    // Calculate rear position (behind the spacecraft)
     float size = 15.0f;
     float angleRad = (orientation + 180.0f) * M_PI / 180.0f;  // Opposite direction
     sf::Vector2f rearOffset(
@@ -184,6 +147,12 @@ void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& space
         );
         drawLine(window, rearPosition, flameEnd, sf::Color::Yellow);
     }
+*/    
+    m_thrust_1 -> set_pose(position, orientation);
+    m_thrust_1 -> fire();
+    sf::Time elapsed = m_clock.restart();
+    m_thrust_1 -> update(elapsed);
+    window.draw(*m_thrust_1);
 }
 
 //----------------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ namespace Constants {
     constexpr float SPACECRAFT_FRICTION = 0.98f;  // velocity multiplier per frame (simulates friction)
     
     // Gravitational force
-    constexpr float GRAVITATIONAL_STRENGTH = 50000.0f;  // gravitational constant (pixels^3 per second^2)
+    constexpr float GRAVITATIONAL_STRENGTH = 1000.0f;  // gravitational constant (pixels^3 per second^2)
     constexpr float MIN_GRAVITY_DISTANCE = 10.0f;  // minimum distance to prevent division by zero
     
     // Projectile physics
@@ -27,6 +27,10 @@ namespace Constants {
     
     // Projectile dimensions
     constexpr float PROJECTILE_SIZE = 2.0f;  // radius in pixels
+    
+    constexpr unsigned int   CRAFT_1 = 1;
+    constexpr unsigned int   CRAFT_2 = 2;
+    constexpr unsigned int   UNKNOWN = 0;
 }
 
 #endif // CONSTANTS_H
