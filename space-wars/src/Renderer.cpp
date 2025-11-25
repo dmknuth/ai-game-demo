@@ -41,9 +41,10 @@ Renderer::Renderer()
         }
     }
 
-    m_player_1 = std::make_shared<Craft>(Constants::CRAFT_1);
-    m_player_2 = std::make_shared<Craft>(Constants::CRAFT_2);
-    m_thrust_1 = std::make_shared<Thrust>(1000, Constants::CRAFT_1);
+    m_player_1 = std::make_unique<Craft>(Constants::CRAFT_1);
+    m_player_2 = std::make_unique<Craft>(Constants::CRAFT_2);
+    m_thrust = std::make_unique<Thrust>(1000, Constants::CRAFT_1);
+    m_explosion = std::make_unique<Explosion>(1000);
 }
 
 //----------------------------------------------------------------------------------------
@@ -68,7 +69,7 @@ void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
     
     // Draw explosions (if any active)
     if (m_explosionActive) {
-        drawExplosion(window, m_explosionPosition, m_explosionRadius);
+        drawExplosion(window, m_explosionPosition /*, m_explosionRadius*/);
     }
     
     // Draw UI
@@ -100,7 +101,7 @@ void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacec
         drawThrustFlame(window, spacecraft);
     }
     else
-        m_thrust_1 -> coast();
+        m_thrust -> coast();
 }
 
 //----------------------------------------------------------------------------------------
@@ -148,11 +149,11 @@ void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& space
         drawLine(window, rearPosition, flameEnd, sf::Color::Yellow);
     }
 */    
-    m_thrust_1 -> set_pose(position, orientation);
-    m_thrust_1 -> fire();
+    m_thrust -> set_pose(position, orientation);
+    m_thrust -> fire();
     sf::Time elapsed = m_clock.restart();
-    m_thrust_1 -> update(elapsed);
-    window.draw(*m_thrust_1);
+    m_thrust -> update(elapsed);
+    window.draw(*m_thrust);
 }
 
 //----------------------------------------------------------------------------------------
@@ -169,8 +170,9 @@ void Renderer::drawProjectile(sf::RenderWindow& window, const Projectile& projec
 }
 
 //----------------------------------------------------------------------------------------
-void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position, float radius) 
+void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position /*, float radius */) 
 {
+    /*
     // Draw explosion as expanding circles
     int numCircles = 3;
     for (int i = 0; i < numCircles; i++) {
@@ -196,6 +198,12 @@ void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position, fl
         // Use a custom orange color (255, 165, 0)
         drawLine(window, position, end, sf::Color(255, 165, 0));
     }
+    */
+    
+    m_explosion -> set_position(position);
+    sf::Time elapsed = m_clock.restart();
+    m_explosion -> update(elapsed);
+    window.draw(*m_explosion);
 }
 
 //----------------------------------------------------------------------------------------
