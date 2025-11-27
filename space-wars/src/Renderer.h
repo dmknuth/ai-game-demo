@@ -37,7 +37,7 @@ private:
     void drawProjectile(sf::RenderWindow& window, const Projectile& projectile);
     
     // Explosion rendering
-    void drawExplosion(sf::RenderWindow& window, sf::Vector2f position /*, float radius */);
+    void drawExplosion(sf::RenderWindow& window, sf::Vector2f position);
     
     // UI rendering
     void drawScore(sf::RenderWindow& window, int score1, int score2);
@@ -58,11 +58,13 @@ private:
     float                   m_explosionTime;
     bool                    m_explosionActive;
     sf::Vector2f            m_explosionPosition;
-    std::unique_ptr<Craft>  m_player_1;
-    std::unique_ptr<Craft>  m_player_2;
-    std::unique_ptr<Thrust> m_thrust;
+    std::unique_ptr<Craft>     m_player_1;
+    std::unique_ptr<Craft>     m_player_2;
+    std::unique_ptr<Thrust>    m_thrust_1;
+    std::unique_ptr<Thrust>    m_thrust_2;
     std::unique_ptr<Explosion> m_explosion;
-    sf::Clock               m_clock;
+    sf::Clock                  m_clock;
+    sf::Time                   m_frameTime;
 };
 
 #endif // RENDERER_H

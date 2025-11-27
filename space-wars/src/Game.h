@@ -56,6 +56,13 @@ private:
     // Player connection state
     bool m_bothPlayersConnected;  // True when we've received at least one message from the other player
     
+    // Respawn system
+    float m_respawnTimer1;  // Timer for player 1 respawn
+    float m_respawnTimer2;  // Timer for player 2 respawn
+    sf::Vector2f m_pendingRespawnPos1;  // Position to respawn player 1
+    sf::Vector2f m_pendingRespawnPos2;  // Position to respawn player 2
+    static constexpr float RESPAWN_DELAY = 1.5f;  // Delay before respawning in seconds
+    
     // Frame rate limiting
     static constexpr float TARGET_FPS = 60.0f;
     static constexpr float FRAME_TIME = 1.0f / TARGET_FPS;

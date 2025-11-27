@@ -3,7 +3,7 @@
 class Explosion : public sf::Drawable, public sf::Transformable
 {
 public:
-    Explosion(unsigned int count) : m_particles(count), m_vertices(sf::PrimitiveType::Points, count)
+    Explosion(unsigned int count) : m_particles(count), m_vertices(sf::PrimitiveType::Points, count), m_active(false)
     {
     }
 
@@ -12,24 +12,37 @@ public:
         m_position = position;
     }
     
-//    void reset_particles()
-//    {
-//        m_position = position;
-//    }
+    void trigger()
+    {
+        m_active = true;
+        // Initialize all particles at the explosion position
+        for (std::size_t i = 0; i < m_particles.size(); ++i)
+        {
+            resetParticle(i);
+        }
+    }
+    
+    void deactivate()
+    {
+        m_active = false;
+    }
     
     void update(sf::Time elapsed)
     {
+        if (!m_active) return;
+        
         for (std::size_t i = 0; i < m_particles.size(); ++i)
         {
             // update the particle lifetime
             Particle& p = m_particles[i];
             p.lifetime -= elapsed;
 
-            // if the particle is dead, respawn it
+            // For explosions, don't respawn particles - let them die
             if (p.lifetime <= sf::Time::Zero)
             {
-                resetParticle(i);
-                m_vertices[i].position = m_position;
+                // Make particle invisible but don't respawn
+                m_vertices[i].color.a = 0;
+                continue;
             }
 
             // update the position of the corresponding vertex
@@ -83,4 +96,5 @@ private:
     sf::VertexArray       m_vertices;
     sf::Time              m_lifetime{sf::seconds(1)};
     sf::Vector2f          m_position;
+    bool                  m_active;
 };

@@ -56,6 +56,11 @@ void InputHandler::processInput(GameState& gameState, int localPlayerId, float d
     // Get local player's spacecraft
     Spacecraft& spacecraft = gameState.getSpacecraft(localPlayerId);
     
+    // Don't process input for dead spacecraft
+    if (!spacecraft.isAlive()) {
+        return;
+    }
+    
     // Handle spacecraft movement
     handleSpacecraftInput(spacecraft, deltaTime);
     
