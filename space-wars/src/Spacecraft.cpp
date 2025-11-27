@@ -11,7 +11,8 @@ Spacecraft::Spacecraft()
     , m_orientation(0.0f)
     , m_velocity(0.0f, 0.0f)
     , m_playerId(1)
-    , m_isThrusting(false) 
+    , m_isThrusting(false)
+    , m_isAlive(true) 
 {
 }
 
@@ -21,7 +22,8 @@ Spacecraft::Spacecraft(sf::Vector2f position, float orientation, int playerId)
     , m_orientation(orientation)
     , m_velocity(0.0f, 0.0f)
     , m_playerId(playerId)
-    , m_isThrusting(false) 
+    , m_isThrusting(false)
+    , m_isAlive(true) 
 {
 }
 
@@ -155,5 +157,6 @@ void Spacecraft::reset(sf::Vector2f position, float orientation)
     m_orientation = orientation;
     m_velocity = sf::Vector2f(0.0f, 0.0f);
     m_isThrusting = false;
+    m_isAlive = true;
 }
 

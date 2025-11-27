@@ -22,12 +22,14 @@ public:
     sf::Vector2f getVelocity() const { return m_velocity; }
     int getPlayerId() const { return m_playerId; }
     bool isThrusting() const { return m_isThrusting; }
+    bool isAlive() const { return m_isAlive; }
     
     // Setters
     void setPosition(sf::Vector2f position) { m_position = position; }
     void setOrientation(float orientation) { m_orientation = orientation; }
     void setVelocity(sf::Vector2f velocity) { m_velocity = velocity; }
     void setThrusting(bool thrusting) { m_isThrusting = thrusting; }
+    void setAlive(bool alive) { m_isAlive = alive; }
     
     // Reset spacecraft to initial state
     void reset(sf::Vector2f position, float orientation);
@@ -38,6 +40,7 @@ private:
     sf::Vector2f m_velocity;
     int m_playerId;  // 1 or 2, for visual distinction
     bool m_isThrusting;
+    bool m_isAlive;
     
     void applyFriction(float deltaTime);
 };

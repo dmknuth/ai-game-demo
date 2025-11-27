@@ -43,7 +43,8 @@ Renderer::Renderer()
 
     m_player_1 = std::make_unique<Craft>(Constants::CRAFT_1);
     m_player_2 = std::make_unique<Craft>(Constants::CRAFT_2);
-    m_thrust = std::make_unique<Thrust>(1000, Constants::CRAFT_1);
+    m_thrust_1 = std::make_unique<Thrust>(1000, Constants::CRAFT_1);
+    m_thrust_2 = std::make_unique<Thrust>(1000, Constants::CRAFT_2);
     m_explosion = std::make_unique<Explosion>(1000);
 }
 
@@ -52,9 +53,8 @@ void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
                       bool connectionLost, int localPlayerId,
                       bool connected, bool bothPlayersConnected) 
 {
-    // Update explosion animation (will be called with deltaTime from Game class)
-    // Note: deltaTime should be passed, but for now we'll update in render
-    // This will be fixed when integrated with Game class
+    // Restart the clock once per frame to measure elapsed time for all particle effects
+    m_frameTime = m_clock.restart();
     
     // Draw spacecraft
     drawSpacecraft(window, gameState.getSpacecraft(1));
@@ -85,6 +85,11 @@ void Renderer::render(sf::RenderWindow& window, const GameState& gameState,
 //----------------------------------------------------------------------------------------
 void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacecraft) 
 {
+    // Don't draw dead spacecraft
+    if (!spacecraft.isAlive()) {
+        return;
+    }
+    
     int playerId = spacecraft.getPlayerId();
     sf::Vector2f position = spacecraft.getPosition();
     float orientation = spacecraft.getOrientation();
@@ -99,24 +104,29 @@ void Renderer::drawSpacecraft(sf::RenderWindow& window, const Spacecraft& spacec
     // Draw thrust flame if thrusting
     if (spacecraft.isThrusting()) {
         drawThrustFlame(window, spacecraft);
+    } else {
+        // Coast the appropriate thrust object
+        if (playerId == 1) {
+            m_thrust_1->coast();
+        } else {
+            m_thrust_2->coast();
+        }
     }
-    else
-        m_thrust -> coast();
 }
 
 //----------------------------------------------------------------------------------------
 void Renderer::drawSpacecraftShape1(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
 {
-    m_player_1 -> set_pose(position, sf::degrees(orientation));
-    m_player_1 -> update();
+    m_player_1->set_pose(position, sf::degrees(orientation));
+    m_player_1->update();
     window.draw(*m_player_1);
 }
 
 //----------------------------------------------------------------------------------------
 void Renderer::drawSpacecraftShape2(sf::RenderWindow& window, sf::Vector2f position, float orientation) 
 {
-    m_player_2 -> set_pose(position, sf::degrees(orientation));
-    m_player_2 -> update();
+    m_player_2->set_pose(position, sf::degrees(orientation));
+    m_player_2->update();
     window.draw(*m_player_2);
 }
 
@@ -125,35 +135,15 @@ void Renderer::drawThrustFlame(sf::RenderWindow& window, const Spacecraft& space
 {
     sf::Vector2f position = spacecraft.getPosition();
     float orientation = spacecraft.getOrientation();
+    int playerId = spacecraft.getPlayerId();
     
-/*    // Calculate rear position (behind the spacecraft)
-    float size = 15.0f;
-    float angleRad = (orientation + 180.0f) * M_PI / 180.0f;  // Opposite direction
-    sf::Vector2f rearOffset(
-        std::cos(angleRad) * size * 0.7f,
-        std::sin(angleRad) * size * 0.7f
-    );
-    sf::Vector2f rearPosition = position + rearOffset;
+    // Use the appropriate thrust object based on player ID
+    Thrust* thrust = (playerId == 1) ? m_thrust_1.get() : m_thrust_2.get();
     
-    // Draw flame as small lines/particles
-    float flameLength = 8.0f;
-    float spreadAngle = 20.0f;  // degrees
-    
-    // Draw 3 flame lines
-    for (int i = -1; i <= 1; i++) {
-        float flameAngle = angleRad + (i * spreadAngle * M_PI / 180.0f);
-        sf::Vector2f flameEnd(
-            rearPosition.x + std::cos(flameAngle) * flameLength,
-            rearPosition.y + std::sin(flameAngle) * flameLength
-        );
-        drawLine(window, rearPosition, flameEnd, sf::Color::Yellow);
-    }
-*/    
-    m_thrust -> set_pose(position, orientation);
-    m_thrust -> fire();
-    sf::Time elapsed = m_clock.restart();
-    m_thrust -> update(elapsed);
-    window.draw(*m_thrust);
+    thrust->set_pose(position, orientation);
+    thrust->fire();
+    thrust->update(m_frameTime);
+    window.draw(*thrust);
 }
 
 //----------------------------------------------------------------------------------------
@@ -170,39 +160,9 @@ void Renderer::drawProjectile(sf::RenderWindow& window, const Projectile& projec
 }
 
 //----------------------------------------------------------------------------------------
-void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position /*, float radius */) 
+void Renderer::drawExplosion(sf::RenderWindow& window, sf::Vector2f position) 
 {
-    /*
-    // Draw explosion as expanding circles
-    int numCircles = 3;
-    for (int i = 0; i < numCircles; i++) {
-        float circleRadius = radius * (1.0f - i * 0.3f);
-        if (circleRadius > 0) {
-            sf::CircleShape explosion(circleRadius);
-            explosion.setPosition(sf::Vector2f(position.x - circleRadius, position.y - circleRadius));
-            explosion.setFillColor(sf::Color::Transparent);
-            explosion.setOutlineColor(sf::Color::Red);
-            explosion.setOutlineThickness(2.0f);
-            window.draw(explosion);
-        }
-    }
-    
-    // Draw explosion lines (burst pattern)
-    int numLines = 8;
-    for (int i = 0; i < numLines; i++) {
-        float angle = (360.0f / numLines) * i * M_PI / 180.0f;
-        sf::Vector2f end(
-            position.x + std::cos(angle) * radius,
-            position.y + std::sin(angle) * radius
-        );
-        // Use a custom orange color (255, 165, 0)
-        drawLine(window, position, end, sf::Color(255, 165, 0));
-    }
-    */
-    
-    m_explosion -> set_position(position);
-    sf::Time elapsed = m_clock.restart();
-    m_explosion -> update(elapsed);
+    m_explosion->update(m_frameTime);
     window.draw(*m_explosion);
 }
 
@@ -346,6 +306,10 @@ void Renderer::triggerExplosion(sf::Vector2f position)
     m_explosionRadius = 0.0f;
     m_explosionTime = 0.0f;
     m_explosionActive = true;
+    
+    // Trigger the particle system at the explosion position
+    m_explosion->set_position(position);
+    m_explosion->trigger();
 }
 
 //----------------------------------------------------------------------------------------
@@ -355,9 +319,11 @@ void Renderer::updateExplosion(float deltaTime)
         m_explosionTime += deltaTime;
         m_explosionRadius = (m_explosionTime / 0.5f) * 30.0f;  // 0.5s duration, 30px max radius
         
+        // Deactivate after explosion duration (particles will continue to fade for up to 1.5s)
         if (m_explosionTime >= 0.5f) {
             m_explosionActive = false;
             m_explosionRadius = 0.0f;
+            m_explosion->deactivate();
         }
     }
 }

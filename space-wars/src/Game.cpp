@@ -21,6 +21,10 @@ Game::Game()
     , m_networkUpdateTimer(0.0f)
     , m_reconnectTimer(0.0f)
     , m_bothPlayersConnected(false)
+    , m_respawnTimer1(-1.0f)  // Negative means not respawning
+    , m_respawnTimer2(-1.0f)  // Negative means not respawning
+    , m_pendingRespawnPos1(0.0f, 0.0f)
+    , m_pendingRespawnPos2(0.0f, 0.0f)
 {
     // Initialize SFML window (1024x768, windowed mode)
     m_window.create(sf::VideoMode(sf::Vector2u(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT)), "Space Wars");
@@ -109,7 +113,11 @@ void Game::update(float deltaTime)
     
     // Update remote player's spacecraft (local player's is updated in InputHandler)
     int remotePlayerId = (m_localPlayerId == 1) ? 2 : 1;
-    m_gameState.getSpacecraft(remotePlayerId).update(deltaTime);
+    Spacecraft& remoteSpacecraft = m_gameState.getSpacecraft(remotePlayerId);
+    // Only update if alive
+    if (remoteSpacecraft.isAlive()) {
+        remoteSpacecraft.update(deltaTime);
+    }
     
     // Check collisions
     checkCollisions();
@@ -119,6 +127,23 @@ void Game::update(float deltaTime)
     
     // Update explosion animation
     m_renderer.updateExplosion(deltaTime);
+    
+    // Update respawn timers
+    if (m_respawnTimer1 >= 0.0f) {
+        m_respawnTimer1 += deltaTime;
+        if (m_respawnTimer1 >= RESPAWN_DELAY) {
+            respawnSpacecraft(1, m_pendingRespawnPos1);
+            m_respawnTimer1 = -1.0f;  // Reset timer (negative = inactive)
+        }
+    }
+    
+    if (m_respawnTimer2 >= 0.0f) {
+        m_respawnTimer2 += deltaTime;
+        if (m_respawnTimer2 >= RESPAWN_DELAY) {
+            respawnSpacecraft(2, m_pendingRespawnPos2);
+            m_respawnTimer2 = -1.0f;  // Reset timer (negative = inactive)
+        }
+    }
     
     // Check network connection and handle reconnection
     if (m_networkManager.isConnected()) {
@@ -185,30 +210,36 @@ void Game::checkCollisions() {
         // Check collision with spacecraft 1
         if (projOwnerId != 1) {
             Spacecraft& sc1 = m_gameState.getSpacecraft(1);
-            sf::Vector2f sc1Pos = sc1.getPosition();
-            float distance = std::sqrt(
-                (projPos.x - sc1Pos.x) * (projPos.x - sc1Pos.x) +
-                (projPos.y - sc1Pos.y) * (projPos.y - sc1Pos.y)
-            );
-            
-            if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
-                handleHit(projectile, 1);
-                return;  // Only one hit per frame
+            // Don't check collision with dead spacecraft
+            if (sc1.isAlive()) {
+                sf::Vector2f sc1Pos = sc1.getPosition();
+                float distance = std::sqrt(
+                    (projPos.x - sc1Pos.x) * (projPos.x - sc1Pos.x) +
+                    (projPos.y - sc1Pos.y) * (projPos.y - sc1Pos.y)
+                );
+                
+                if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
+                    handleHit(projectile, 1);
+                    return;  // Only one hit per frame
+                }
             }
         }
         
         // Check collision with spacecraft 2
         if (projOwnerId != 2) {
             Spacecraft& sc2 = m_gameState.getSpacecraft(2);
-            sf::Vector2f sc2Pos = sc2.getPosition();
-            float distance = std::sqrt(
-                (projPos.x - sc2Pos.x) * (projPos.x - sc2Pos.x) +
-                (projPos.y - sc2Pos.y) * (projPos.y - sc2Pos.y)
-            );
-            
-            if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
-                handleHit(projectile, 2);
-                return;  // Only one hit per frame
+            // Don't check collision with dead spacecraft
+            if (sc2.isAlive()) {
+                sf::Vector2f sc2Pos = sc2.getPosition();
+                float distance = std::sqrt(
+                    (projPos.x - sc2Pos.x) * (projPos.x - sc2Pos.x) +
+                    (projPos.y - sc2Pos.y) * (projPos.y - sc2Pos.y)
+                );
+                
+                if (distance < Constants::SPACECRAFT_SIZE + Constants::PROJECTILE_SIZE) {
+                    handleHit(projectile, 2);
+                    return;  // Only one hit per frame
+                }
             }
         }
     }
@@ -252,8 +283,19 @@ void Game::handleHit(const Projectile& projectile, int hitSpacecraftId) {
     sf::Vector2f destructionPos = hitSpacecraft.getPosition();
     m_renderer.triggerExplosion(destructionPos);
     
-    // Respawn the hit spacecraft at a random position
-    respawnSpacecraft(hitSpacecraftId, destructionPos);
+    // Mark spacecraft as dead
+    hitSpacecraft.setAlive(false);
+    hitSpacecraft.setVelocity(sf::Vector2f(0.0f, 0.0f));  // Stop movement
+    hitSpacecraft.setThrusting(false);  // Stop thrust animation
+    
+    // Start respawn timer
+    if (hitSpacecraftId == 1) {
+        m_respawnTimer1 = 0.0f;  // Start timer at 0
+        m_pendingRespawnPos1 = destructionPos;  // Store destruction position
+    } else {
+        m_respawnTimer2 = 0.0f;
+        m_pendingRespawnPos2 = destructionPos;
+    }
     
     std::cout << "Player " << projectileOwnerId << " hit Player " << hitSpacecraftId 
               << "! Score: " << m_gameState.getScore(projectileOwnerId) << std::endl;
